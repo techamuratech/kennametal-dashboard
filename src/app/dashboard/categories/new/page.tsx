@@ -13,7 +13,7 @@ export default function NewCategoryPage() {
   const { register, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
       title: '',
-      description: '',
+      // description: '',
       image: null
     }
   });
@@ -64,7 +64,7 @@ export default function NewCategoryPage() {
             />
             {errors.title && <p className="text-red-600 text-sm">{errors.title.message}</p>}
           </div>
-          <div>
+          {/* <div>
             <label htmlFor="description" className="form-label">Description</label>
             <textarea
               id="description"
@@ -72,12 +72,13 @@ export default function NewCategoryPage() {
               {...register('description', { required: 'Description is required' })}
             />
             {errors.description && <p className="text-red-600 text-sm">{errors.description.message}</p>}
-          </div>
+          </div> */}
           <div>
-            <label htmlFor="image" className="form-label">Category Image</label>
+            <label htmlFor="image" className="form-label">Category Image * (Recommended: 716x380px, JPG/PNG, Max 2MB)</label>
             <input
               id="image"
               type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
               className="form-input"
               {...register('image', { required: 'Category image is required' })}
             />

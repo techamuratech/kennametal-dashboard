@@ -15,9 +15,9 @@ export default function CategoriesPage() {
   const { userData } = useAuth();
   const userRole = userData?.role || 'pending';
   
-  const canCreate = hasPermission(userRole, 'create', 'categories');
+  // const canCreate = hasPermission(userRole, 'create', 'categories');
   const canUpdate = hasPermission(userRole, 'update', 'categories');
-  const canDelete = hasPermission(userRole, 'delete', 'categories');
+  // const canDelete = hasPermission(userRole, 'delete', 'categories');
 
   useEffect(() => {
     fetchCategories();
@@ -47,35 +47,34 @@ export default function CategoriesPage() {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   };
 
-  const handleDelete = async (id: string) => {
-    if (deleteConfirm !== id) {
-      setDeleteConfirm(id);
-      return;
-    }
-    
-    try {
-      await deleteCategory(id);
-      
-      // Log the action
-      if (userData) {
-
-        // console.log("userData", userData);
-        await createLogEntry({
-          uid: userData.email,
-          action: 'category_deleted',
-          details: {
-            categoryId: id,
-          }
-        });
-      }
-      
-      // Refresh the list
-      fetchCategories();
-      setDeleteConfirm(null);
-    } catch (error) {
-      console.error('Error deleting category:', error);
-    }
-  };
+  // const handleDelete = async (id: string) => {
+  //   if (deleteConfirm !== id) {
+  //     setDeleteConfirm(id);
+  //     return;
+  //   }
+  //   
+  //   try {
+  //     await deleteCategory(id);
+  //     
+  //     // Log the action
+  //     if (userData) {
+  //       // console.log("userData", userData);
+  //       await createLogEntry({
+  //         uid: userData.email,
+  //         action: 'category_deleted',
+  //         details: {
+  //           categoryId: id,
+  //         }
+  //       });
+  //     }
+  //     
+  //     // Refresh the list
+  //     fetchCategories();
+  //     setDeleteConfirm(null);
+  //   } catch (error) {
+  //     console.error('Error deleting category:', error);
+  //   }
+  // };
 
   if (loading) {
     return (
@@ -87,14 +86,14 @@ export default function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-900">Categories</h1>
         {canCreate && (
           <Link href="/dashboard/categories/new" className="btn-primary">
             Add New Category
           </Link>
         )}
-      </div>
+      </div> */}
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {categories.length > 0 ? (
@@ -136,7 +135,7 @@ export default function CategoriesPage() {
                     Edit
                   </Link>
                 )}
-                {canDelete && (
+                {/* {canDelete && (
                   <button
                     onClick={() => handleDelete(category.id)}
                     className={`${
@@ -147,7 +146,7 @@ export default function CategoriesPage() {
                   >
                     {deleteConfirm === category.id ? 'Confirm' : 'Delete'}
                   </button>
-                )}
+                )} */}
               </div>
             </div>
           ))

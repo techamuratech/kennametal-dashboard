@@ -102,8 +102,8 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [userRole, authLoading]);
 
-  // Show loading while auth is initializing OR while we don't know the user role OR during logout
-  if (authLoading || loading || !user) {
+  // Show loading while auth is initializing OR during logout
+  if (authLoading || !user) {
     return (
       <div className="flex justify-center items-center h-64">
         <LoadingSpinner size="lg" message="Loading Dashboard Data..." />
@@ -111,7 +111,7 @@ export default function Dashboard() {
     );
   }
 
-  // Show unauthorized only for confirmed pending users (after auth is loaded and user exists)
+  // Show unauthorized for confirmed pending users (after auth is loaded and user exists)
   if (user && !authLoading && userRole === 'pending') {
     return(
       <>
@@ -120,6 +120,15 @@ export default function Dashboard() {
         </div>
       </>
     )
+  }
+
+  // Show loading while fetching dashboard data for authorized users
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <LoadingSpinner size="lg" message="Loading Dashboard Data..." />
+      </div>
+    );
   }
 
   return (

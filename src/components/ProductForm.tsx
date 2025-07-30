@@ -378,7 +378,7 @@ export default function ProductForm({
                   htmlFor="title"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Product Title
+                  Product Title *
                 </label>
                 <input
                   type="text"
@@ -400,7 +400,7 @@ export default function ProductForm({
                   htmlFor="subtitle"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Product Subtitle
+                  Product Subtitle *
                 </label>
                 <input
                   type="text"
@@ -422,7 +422,7 @@ export default function ProductForm({
                   htmlFor="categoryId"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Category
+                  Category *
                 </label>
                 <select
                   id="categoryId"
@@ -450,7 +450,7 @@ export default function ProductForm({
                   htmlFor="material_number"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Material Number
+                  Material Number *
                 </label>
                 <input
                   type="text"
@@ -472,7 +472,7 @@ export default function ProductForm({
                   htmlFor="iso"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  ISO Catalog ID
+                  ISO Catalog ID *
                 </label>
                 <input
                   type="text"
@@ -782,12 +782,12 @@ export default function ProductForm({
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Icon
+                        Icon (Recommended: 35x41px, JPG/PNG/SVG, Max 1MB)
                       </label>
                       <div className="mt-1 flex items-center space-x-3">
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/jpeg,image/jpg,image/png,image/webp,image/svg+xml"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
@@ -875,11 +875,11 @@ export default function ProductForm({
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Product Listing Image *
+                  Product Listing Image * (Recommended: 342x342px, JPG/PNG, Max 2MB)
                 </label>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
                   onChange={(e) => {
                     setImageFiles({
                       ...imageFiles,
@@ -908,11 +908,11 @@ export default function ProductForm({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Overview Image
+                  Overview Image (Recommended: 716x716px, JPG/PNG, Max 2MB)
                 </label>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
                   onChange={(e) =>
                     setImageFiles({
                       ...imageFiles,
@@ -932,7 +932,7 @@ export default function ProductForm({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-4">
-                  Product Gallery Images *
+                  Product Gallery Images * (Recommended: 716x716px, JPG/PNG, Max 2MB each)
                 </label>
                 {imageErrors.gallery && (
                   <p className="mb-2 text-sm text-red-600">

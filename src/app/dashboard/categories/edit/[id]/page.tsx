@@ -21,7 +21,7 @@ export default function EditCategoryPage() {
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     defaultValues: {
       title: '',
-      description: '',
+      // description: '',
     }
   });
 
@@ -34,7 +34,7 @@ export default function EditCategoryPage() {
         // console.log("fetching category by id", data);
         setCategory(data);
         setValue('title', data.title);
-        setValue('description', data.description);
+        // setValue('description', data.description);
       } catch (error) {
         console.error('Error fetching category:', error);
       } finally {
@@ -97,7 +97,7 @@ export default function EditCategoryPage() {
             />
             {errors.title && <p className="text-red-600 text-sm">{errors.title.message}</p>}
           </div>
-          <div>
+          {/* <div>
             <label htmlFor="description" className="form-label">Description</label>
             <textarea
               id="description"
@@ -105,13 +105,13 @@ export default function EditCategoryPage() {
               {...register('description', { required: 'Description is required' })}
             />
             {errors.description && <p className="text-red-600 text-sm">{errors.description.message}</p>}
-          </div>
+          </div> */}
           <div>
-            <label htmlFor="image" className="form-label">Category Image</label>
+            <label htmlFor="image" className="form-label">Category Image (Recommended: 716x380px, JPG/PNG, Max 2MB)</label>
             <input
               id="image"
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
               className="form-input"
               onChange={(e) => setImageFile(e.target.files?.[0] || null)}
             />
