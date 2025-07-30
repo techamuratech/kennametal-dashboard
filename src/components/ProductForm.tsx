@@ -57,7 +57,6 @@ export default function ProductForm({
       images: ["", ""],
       product_img: "",
       overview_img: "",
-      overviewPoints: [{}],
       related_parts: [],
       featured: false,
       productPrice: 0,
@@ -67,13 +66,10 @@ export default function ProductForm({
   const [applicationFields, setApplicationFields] = useState([
     { uses: "", icon: "" },
   ]);
-  const [overviewPointsFields, setOverviewPointsFields] = useState<
-    Record<string, string>[]
-  >([{}]);
-  const [imageFiles, setImageFiles] = useState<{ [key: string]: File | null }>(
-    {}
-  );
+  const [imageFiles, setImageFiles] = useState<{ [key: string]: File | null }>({});
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [selectedRelatedParts, setSelectedRelatedParts] = useState<string[]>([]);
+  const [imageErrors, setImageErrors] = useState<{ [key: string]: string }>({});
 
   const addApplicationField = () => {
     setApplicationFields([...applicationFields, { uses: "", icon: "" }]);
@@ -108,48 +104,6 @@ export default function ProductForm({
     } catch (error) {
       console.error("Error uploading icon:", error);
     }
-  };
-
-  const addOverviewPointField = () => {
-    setOverviewPointsFields([...overviewPointsFields, {}]);
-  };
-
-  const removeOverviewPointField = (index: number) => {
-    if (overviewPointsFields.length > 1) {
-      const newFields = overviewPointsFields.filter((_, i) => i !== index);
-      setOverviewPointsFields(newFields);
-      setValue("overviewPoints", newFields);
-    }
-  };
-
-  const updateOverviewPointField = (
-    index: number,
-    key: string,
-    value: string
-  ) => {
-    const newFields = [...overviewPointsFields];
-    newFields[index][key] = value;
-    setOverviewPointsFields(newFields);
-    setValue("overviewPoints", newFields);
-  };
-
-  const addOverviewPointKeyValue = (index: number) => {
-    const newFields = [...overviewPointsFields];
-    const existingKeys = Object.keys(newFields[index] || {});
-    const newKey = `New Field ${existingKeys.length + 1}`;
-    if (!newFields[index]) {
-      newFields[index] = {};
-    }
-    newFields[index][newKey] = "";
-    setOverviewPointsFields(newFields);
-    setValue("overviewPoints", newFields);
-  };
-
-  const removeOverviewPointKeyValue = (index: number, keyToRemove: string) => {
-    const newFields = [...overviewPointsFields];
-    delete newFields[index][keyToRemove];
-    setOverviewPointsFields(newFields);
-    setValue("overviewPoints", newFields);
   };
 
   const toggleRelatedPart = (partId: string, partTitle: string) => {
@@ -228,7 +182,7 @@ export default function ProductForm({
       setValue("subtitle", productData.subtitle);
       setValue("overview", productData.overview);
       setValue("categoryId", productData.categoryId);
-      setSelectedCategory(productData.categoryId); // Set selected category
+      setSelectedCategory(productData.categoryId);
       setValue("material_number", productData.material_number || "");
       setValue("cutting_conditions", productData.cutting_conditions || "");
       setValue("cutting_material", productData.cutting_material || "");
@@ -248,22 +202,45 @@ export default function ProductForm({
         setValue("application", productData.application);
       }
 
-      // Set overview points
-      if (productData.overviewPoints && productData.overviewPoints.length > 0) {
-        setOverviewPointsFields(productData.overviewPoints);
-        setValue("overviewPoints", productData.overviewPoints);
-      }
-
+      // Set gallery images
       if (productData.images && productData.images.length > 0) {
-        setValue("imageUrl1", productData.images[0] || "");
-        if (productData.images.length > 1) {
-          setValue("imageUrl2", productData.images[1] || "");
-        }
+        setGalleryImages(productData.images);
+        setValue("images", productData.images);
+      } else {
+        setGalleryImages([""]);
       }
+    } else {
+      // Initialize with one empty gallery image for new products
+      setGalleryImages([""]);
     }
   }, [isEditing, productData, setValue]);
 
+  const validateImages = () => {
+    const errors: { [key: string]: string } = {};
+    
+    // Check if product listing image exists
+    const hasProductImg = imageFiles.product_img || productData?.product_img;
+    if (!hasProductImg) {
+      errors.product_img = "Product listing image is required";
+    }
+    
+    // Check if at least one gallery image exists
+    const hasGalleryImages = galleryImages.some(img => img && img.trim() !== "") || 
+                            Object.keys(imageFiles).some(key => key.startsWith('gallery_') && imageFiles[key]);
+    if (!hasGalleryImages) {
+      errors.gallery = "At least one gallery image is required";
+    }
+    
+    setImageErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const onSubmit = async (data: any) => {
+    // Validate images first
+    if (!validateImages()) {
+      return;
+    }
+    
     setSubmitting(true);
     try {
       // Upload images if files are selected
@@ -288,36 +265,39 @@ export default function ProductForm({
         );
       }
 
-      if (imageFiles.image_0) {
-        uploadPromises.push(
-          uploadFile(
-            imageFiles.image_0,
-            `products/${data.title}/gallery-1.jpg`
-          ).then((url) => (imageUrls.image_0 = url))
-        );
-      }
-
-      if (imageFiles.image_1) {
-        uploadPromises.push(
-          uploadFile(
-            imageFiles.image_1,
-            `products/${data.title}/gallery-2.jpg`
-          ).then((url) => (imageUrls.image_1 = url))
-        );
-      }
+      // Upload gallery images
+      galleryImages.forEach((_, index) => {
+        if (imageFiles[`gallery_${index}`]) {
+          uploadPromises.push(
+            uploadFile(
+              imageFiles[`gallery_${index}`],
+              `products/${data.title}/gallery-${index + 1}.jpg`
+            ).then((url) => {
+              if (!imageUrls.gallery) imageUrls.gallery = [];
+              imageUrls.gallery[index] = url;
+            })
+          );
+        }
+      });
 
       await Promise.all(uploadPromises);
 
+      // Merge uploaded gallery images with existing ones
+      const finalGalleryImages = galleryImages.map((existingUrl, index) => {
+        return imageUrls.gallery?.[index] || existingUrl;
+      }).filter(Boolean);
+
+      // Filter out empty application fields
+      const validApplications = applicationFields.filter(app => 
+        app.uses && app.uses.trim() !== ""
+      );
+
       const productToSave = {
         ...data,
-        application: applicationFields,
-        overviewPoints: overviewPointsFields,
+        application: validApplications.length > 0 ? validApplications : [],
         product_img: imageUrls.product_img || productData?.product_img || "",
         overview_img: imageUrls.overview_img || productData?.overview_img || "",
-        images: [
-          imageUrls.image_0 || productData?.images?.[0] || "",
-          imageUrls.image_1 || productData?.images?.[1] || "",
-        ].filter(Boolean),
+        images: finalGalleryImages,
       };
 
       if (isEditing && productData) {
@@ -341,6 +321,43 @@ export default function ProductForm({
       </div>
     );
   }
+
+  const addGalleryImage = () => {
+    setGalleryImages([...galleryImages, ""]);
+  };
+
+  const removeGalleryImage = (index: number) => {
+    const newImages = galleryImages.filter((_, i) => i !== index);
+    setGalleryImages(newImages);
+    setValue("images", newImages);
+    
+    // Remove corresponding file if exists
+    const newImageFiles = { ...imageFiles };
+    delete newImageFiles[`gallery_${index}`];
+    setImageFiles(newImageFiles);
+  };
+
+  const handleGalleryImageUpload = async (index: number, file: File) => {
+    try {
+      const imageUrl = await uploadFile(
+        file,
+        `products/${watch("title") || "untitled"}/gallery-${index + 1}.jpg`
+      );
+      const newImages = [...galleryImages];
+      newImages[index] = imageUrl;
+      setGalleryImages(newImages);
+      setValue("images", newImages);
+    } catch (error) {
+      console.error("Error uploading gallery image:", error);
+    }
+  };
+
+  const updateGalleryImageUrl = (index: number, url: string) => {
+    const newImages = [...galleryImages];
+    newImages[index] = url;
+    setGalleryImages(newImages);
+    setValue("images", newImages);
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -424,6 +441,50 @@ export default function ProductForm({
                 {errors.categoryId && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.categoryId.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="col-span-1 sm:col-span-3">
+                <label
+                  htmlFor="material_number"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Material Number
+                </label>
+                <input
+                  type="text"
+                  id="material_number"
+                  {...register("material_number", {
+                    required: "Material number is required",
+                  })}
+                  className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 py-2 px-3 border rounded-md"
+                />
+                {errors.material_number && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.material_number.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="col-span-1 sm:col-span-3">
+                <label
+                  htmlFor="iso"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  ISO Catalog ID
+                </label>
+                <input
+                  type="text"
+                  id="iso"
+                  {...register("iso", {
+                    required: "ISO Catalog ID is required",
+                  })}
+                  className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 py-2 px-3 border rounded-md"
+                />
+                {errors.iso && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.iso.message}
                   </p>
                 )}
               </div>
@@ -773,120 +834,6 @@ export default function ProductForm({
         <div className="md:grid md:grid-cols-3 md:gap-6">
           <div className="md:col-span-1">
             <h3 className="text-lg font-medium leading-6 text-gray-900">
-              Overview Points
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Add detailed specifications and technical data points.
-            </p>
-          </div>
-          <div className="mt-5 md:mt-0 md:col-span-2">
-            <div className="space-y-4">
-              {overviewPointsFields.map((pointGroup, groupIndex) => (
-                <div
-                  key={groupIndex}
-                  className="border border-gray-200 rounded-lg p-4"
-                >
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-sm font-medium text-gray-700">
-                      Overview Group {groupIndex + 1}
-                    </h4>
-                    {overviewPointsFields.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeOverviewPointField(groupIndex)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove Group
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="space-y-3">
-                    {Object.entries(pointGroup || {})
-                      .filter(([key, value]) => key && key.trim() !== "")
-                      .map(([key, value], keyIndex) => (
-                        <div key={keyIndex} className="grid grid-cols-12 gap-2">
-                          <div className="col-span-5">
-                            <input
-                              type="text"
-                              value={key || ""}
-                              onChange={(e) => {
-                                const newFields = [...overviewPointsFields];
-                                const oldValue = newFields[groupIndex][key];
-                                delete newFields[groupIndex][key];
-                                newFields[groupIndex][e.target.value] =
-                                  oldValue;
-                                setOverviewPointsFields(newFields);
-                                setValue("overviewPoints", newFields);
-                              }}
-                              className="block w-full text-sm border-gray-300 rounded-md py-2 px-3 border"
-                              placeholder="Field name (e.g., Material Number)"
-                            />
-                          </div>
-                          <div className="col-span-5">
-                            <input
-                              type="text"
-                              value={value || ""}
-                              onChange={(e) =>
-                                updateOverviewPointField(
-                                  groupIndex,
-                                  key,
-                                  e.target.value
-                                )
-                              }
-                              className="block w-full text-sm border-gray-300 rounded-md py-2 px-3 border"
-                              placeholder="Field value"
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                removeOverviewPointKeyValue(groupIndex, key)
-                              }
-                              className="text-red-600 hover:text-red-800 text-sm px-2 py-1"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-
-                    {Object.keys(pointGroup || {}).filter(
-                      (key) => key && key.trim() !== ""
-                    ).length === 0 && (
-                      <div className="text-sm text-gray-500 italic">
-                        No fields added yet. Click "Add Field" to start.
-                      </div>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => addOverviewPointKeyValue(groupIndex)}
-                      className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                      + Add Field
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={addOverviewPointField}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-              >
-                + Add Overview Group
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
-        <div className="md:grid md:grid-cols-3 md:gap-6">
-          <div className="md:col-span-1">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">
               Additional Details
             </h3>
           </div>
@@ -928,19 +875,28 @@ export default function ProductForm({
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Product Listing Image
+                  Product Listing Image *
                 </label>
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setImageFiles({
                       ...imageFiles,
                       product_img: e.target.files?.[0] || null,
-                    })
-                  }
+                    });
+                    // Clear error when file is selected
+                    if (e.target.files?.[0]) {
+                      setImageErrors({ ...imageErrors, product_img: "" });
+                    }
+                  }}
                   className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
                 />
+                {imageErrors.product_img && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {imageErrors.product_img}
+                  </p>
+                )}
                 {productData?.product_img && (
                   <img
                     src={productData.product_img}
@@ -976,34 +932,82 @@ export default function ProductForm({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-4">
-                  Product Slider Images
+                  Product Gallery Images *
                 </label>
+                {imageErrors.gallery && (
+                  <p className="mb-2 text-sm text-red-600">
+                    {imageErrors.gallery}
+                  </p>
+                )}
                 <div className="space-y-4">
-                  {[0, 1].map((index) => (
-                    <div key={index}>
-                      <label className="block text-sm text-gray-600 mb-2">
-                        Gallery Image {index + 1}
-                      </label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) =>
-                          setImageFiles({
-                            ...imageFiles,
-                            [`image_${index}`]: e.target.files?.[0] || null,
-                          })
-                        }
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-                      />
-                      {productData?.images?.[index] && (
-                        <img
-                          src={productData.images[index]}
-                          alt={`Gallery ${index + 1}`}
-                          className="mt-2 h-20 w-20 object-cover rounded"
+                  {galleryImages.map((imageUrl, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex justify-between items-center mb-3">
+                        <label className="block text-sm text-gray-600">
+                          Gallery Image {index + 1}
+                        </label>
+                        {galleryImages.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeGalleryImage(index)}
+                            className="text-red-600 hover:text-red-800 text-sm"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setImageFiles({
+                                ...imageFiles,
+                                [`gallery_${index}`]: file,
+                              });
+                              handleGalleryImageUpload(index, file);
+                              // Clear gallery error when file is uploaded
+                              setImageErrors({ ...imageErrors, gallery: "" });
+                            }
+                          }}
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
                         />
-                      )}
+                        
+                        <input
+                          type="text"
+                          value={imageUrl}
+                          onChange={(e) => {
+                            updateGalleryImageUrl(index, e.target.value);
+                            // Clear gallery error when URL is added
+                            if (e.target.value.trim()) {
+                              setImageErrors({ ...imageErrors, gallery: "" });
+                            }
+                          }}
+                          className="block w-full text-sm border-gray-300 rounded-md py-2 px-3 border"
+                          placeholder="Or paste image URL directly"
+                        />
+                        
+                        {imageUrl && (
+                          <img
+                            src={imageUrl}
+                            alt={`Gallery ${index + 1}`}
+                            className="mt-2 h-20 w-20 object-cover rounded border"
+                          />
+                        )}
+                      </div>
                     </div>
                   ))}
+                  
+                  <button
+                    type="button"
+                    onClick={addGalleryImage}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  >
+                    + Add Gallery Image
+                  </button>
                 </div>
               </div>
             </div>
@@ -1011,24 +1015,13 @@ export default function ProductForm({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="w-full sm:w-auto bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-        >
-          Cancel
-        </button>
+      <div className="flex justify-end">
         <button
           type="submit"
           disabled={submitting}
-          className="w-full sm:w-auto inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
         >
-          {submitting
-            ? "Saving..."
-            : isEditing
-            ? "Update Product"
-            : "Create Product"}
+          {submitting ? "Saving..." : isEditing ? "Update Product" : "Create Product"}
         </button>
       </div>
     </form>
