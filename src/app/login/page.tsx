@@ -101,13 +101,6 @@ export default function Login() {
             </button>
           </div>
         </form>
-
-         <div className="text-center mt-4">
-            <span className="text-gray-600">Create a new account? </span>
-            <Link href="/signup">
-              <p className="text-primary-600 hover:text-primary-700">Signup</p>
-            </Link>
-          </div>
       </div>
     </div>
   );

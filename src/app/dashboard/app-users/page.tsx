@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getAppUsers, updateAppUser } from '@/lib/firestore-service';
+import { getAppUsers, updateAppUser, resetPassword } from '@/lib/firestore-service';
 import { useAuth } from '@/lib/auth-context';
 import { hasPermission } from '@/lib/rbac';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -29,6 +29,8 @@ export default function AppUsersPage() {
   const [usersPerPage] = useState(10);
   const { userData } = useAuth();
   const userRole = userData?.role || 'pending';
+
+  // Remove handleResetPassword function
 
   useEffect(() => {
     const fetchAppUsers = async () => {

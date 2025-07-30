@@ -18,8 +18,9 @@ import {
 } from 'firebase/firestore';
 
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { sendPasswordResetEmail } from 'firebase/auth';
 
-import { db } from './firebase';
+import { db, auth } from './firebase';
 
 // Types based on your Firestore data
 export interface Product {
@@ -66,6 +67,8 @@ export interface User {
   role: 'master' | 'admin' | 'user' | 'pending';
   status: 'active' | 'disabled';
   name: string;
+  hashedPassword?: string; // Add hashed password field
+  password?: string; // Plain text password (only for display to master)
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
   notificationsEnabled: {
@@ -312,6 +315,55 @@ export const updateUser = async (id: string, userData: Partial<Omit<User, 'id' |
     ...userData,
     updatedAt: serverTimestamp()
   });
+};
+
+export const createUser = async (userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+  const docRef = await addDoc(collection(db, 'users'), {
+    ...userData,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+  return docRef.id;
+};
+
+// Password reset function
+export const resetPassword = async (email: string): Promise<void> => {
+  await sendPasswordResetEmail(auth, email);
+};
+
+// Custom login function for Firestore-based authentication
+export const loginWithFirestore = async (email: string, password: string): Promise<User | null> => {
+  try {
+    // Query users collection for matching email
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      throw new Error('Invalid email or password');
+    }
+    
+    const userDoc = querySnapshot.docs[0];
+    const userData = userDoc.data() as User;
+    
+    // Check if user is disabled
+    if (userData.status === 'disabled') {
+      throw new Error('Account is disabled');
+    }
+    
+    // Verify password
+    const bcrypt = await import('bcryptjs');
+    const isPasswordValid = await bcrypt.compare(password, userData.hashedPassword || '');
+    
+    if (!isPasswordValid) {
+      throw new Error('Invalid email or password');
+    }
+    
+    return { id: userDoc.id, ...userData };
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
 };
 
 // Logs

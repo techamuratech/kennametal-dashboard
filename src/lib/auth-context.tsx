@@ -3,12 +3,12 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
   User, 
   signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
+import { loginWithFirestore } from './firestore-service';
 
 type UserRole = 'master' | 'admin' | 'user' | 'pending';
 
@@ -25,8 +25,8 @@ interface AuthContextType {
   userData: UserData | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,68 +37,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      
-      if (user) {
-        try {
-
-          // console.log("user", user);
-          // console.log("doc", doc(db, 'users', user.uid));
-          // console.log("getDoc", await getDoc(doc(db, 'users', user.uid)));
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            setUserData({
-              uid: user.uid,
-              email: user.email,
-              role: data.role as UserRole,
-              name: data.name || null,
-              phone: data.phone || null
-            });
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-        }
-      } else {
-        setUserData(null);
+    // Since we're not using Firebase Auth anymore, just set loading to false
+    // You might want to check localStorage for persisted login state here
+    const checkAuthState = () => {
+      const savedUser = localStorage.getItem('currentUser');
+      if (savedUser) {
+        const userData = JSON.parse(savedUser);
+        setUser({ uid: userData.uid, email: userData.email } as any);
+        setUserData(userData);
       }
-      
       setLoading(false);
-    });
-
-    return () => unsubscribe();
+    };
+    
+    checkAuthState();
   }, []);
 
   const login = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    try {
+      const user = await loginWithFirestore(email, password);
+      if (user) {
+        const userData = {
+          uid: user.id!,
+          email: user.email,
+          role: user.role as UserRole,
+          name: user.name || null,
+          phone: user.phone || null
+        };
+        
+        setUserData(userData);
+        setUser({
+          uid: user.id!,
+          email: user.email,
+          emailVerified: true
+        } as any);
+        
+        // Persist login state
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+      }
+    } catch (error) {
+      throw error;
+    }
   };
 
-  const signup = async (email: string, password: string) => {
-  try {
-    const result = await createUserWithEmailAndPassword(auth, email, password);
-    // console.log("User created:", result.user);
-
-    // Create a user document in Firestore
-    const userDoc = await setDoc(doc(db, 'users', result.user.uid), {
-      email: result.user.email,
-      role: 'pending', // or any default role
-      name: null,
-      phone: null
-    });
-
-
-    // console.log("userDoc", userDoc);
-
-    return result.user;
-  } catch (error) {
-    console.error("Error creating user:", error);
-    throw error;
-  }
-};
+  const resetPassword = async (email: string) => {
+    const { sendPasswordResetEmail } = await import('firebase/auth');
+    await sendPasswordResetEmail(auth, email);
+  };
 
   const logout = async () => {
-    await signOut(auth);
+    setUser(null);
+    setUserData(null);
+    localStorage.removeItem('currentUser');
   };
 
   const value = {
@@ -106,8 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userData,
     loading,
     login,
-    signup,
-    logout
+    logout,
+    resetPassword
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
