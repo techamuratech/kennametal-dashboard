@@ -19,9 +19,11 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     fetchNotifications();
-  }, []);
+  }, [userRole]);
 
   const fetchNotifications = async () => {
+    if (!userRole || userRole === 'pending') return;
+    
     setLoading(true);
     try {
       if (hasPermission(userRole, 'read', 'notifications')) {

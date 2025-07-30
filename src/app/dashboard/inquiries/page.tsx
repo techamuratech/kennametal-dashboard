@@ -23,9 +23,11 @@ export default function InquiriesPage() {
 
   useEffect(() => {
     fetchInquiries();
-  }, []);
+  }, [userRole]); // Add userRole as dependency
 
   const fetchInquiries = async () => {
+    if (!userRole || userRole === 'pending') return; // Add early return
+    
     setLoading(true);
     try {
       if (hasPermission(userRole, 'read', 'inquiries')) {

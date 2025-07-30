@@ -19,9 +19,11 @@ export default function WhatsNewPage() {
 
   useEffect(() => {
     fetchWhatsNew();
-  }, []);
+  }, [userRole]); // Add userRole as dependency
 
   const fetchWhatsNew = async () => {
+    if (!userRole || userRole === 'pending') return; // Add early return
+    
     setLoading(true);
     try {
       if (hasPermission(userRole, 'read', 'whats_new')) {
