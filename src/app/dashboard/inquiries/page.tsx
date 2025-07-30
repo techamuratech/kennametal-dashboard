@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getInquiries, getAppUsers, Inquiry, AppUser, InquirySubmission } from '@/lib/firestore-service';
+import { getInquiries, getAppUsers, markInquiryAsRead, Inquiry, AppUser, InquirySubmission } from '@/lib/firestore-service';
 import { useAuth } from '@/lib/auth-context';
 import { hasPermission } from '@/lib/rbac';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -59,12 +59,27 @@ export default function InquiriesPage() {
     }
   };
 
-  const toggleRowExpansion = (inquiryId: string) => {
+  const toggleRowExpansion = async (inquiryId: string) => {
     const newExpandedRows = new Set(expandedRows);
     if (newExpandedRows.has(inquiryId)) {
       newExpandedRows.delete(inquiryId);
     } else {
       newExpandedRows.add(inquiryId);
+      
+      // Mark inquiry as read when expanding details
+      try {
+        await markInquiryAsRead(inquiryId);
+        // Update local state to reflect read status
+        setInquiries(prevInquiries => 
+          prevInquiries.map(inquiry => 
+            inquiry.id === inquiryId 
+              ? { ...inquiry, isRead: true, readAt: new Date().toISOString() }
+              : inquiry
+          )
+        );
+      } catch (error) {
+        console.error('Error marking inquiry as read:', error);
+      }
     }
     setExpandedRows(newExpandedRows);
   };
@@ -154,16 +169,23 @@ export default function InquiriesPage() {
             {currentInquiries.length > 0 ? (
               currentInquiries.map((inquiry) => (
                 <>
-                  <tr key={inquiry.id} className="hover:bg-gray-50">
+                  <tr key={inquiry.id} className={`hover:bg-gray-50 ${!inquiry.isRead ? 'bg-blue-50' : ''}`}>
                     <td className="py-4 px-6 border-r-2">
-                      <div className="text-sm font-medium text-gray-900">
-                        {inquiry.user ? inquiry.user.displayName : 'Unknown User'}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {inquiry.user?.email || 'No email'}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {inquiry.user?.phoneNumber || 'No phone'}
+                      <div className="flex items-center">
+                        {!inquiry.isRead && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 flex-shrink-0"></div>
+                        )}
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {inquiry.user ? inquiry.user.displayName : 'Unknown User'}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {inquiry.user?.email || 'No email'}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {inquiry.user?.phoneNumber || 'No phone'}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="py-4 px-6 border-r-2">
@@ -201,7 +223,11 @@ export default function InquiriesPage() {
                     <td className="py-4 px-6">
                       <button
                         onClick={() => toggleRowExpansion(inquiry.id!)}
-                        className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                        className={`text-sm font-medium ${
+                          !inquiry.isRead 
+                            ? 'text-blue-600 hover:text-blue-900 font-semibold' 
+                            : 'text-blue-600 hover:text-blue-900'
+                        }`}
                       >
                         {expandedRows.has(inquiry.id!) ? 'Hide Details' : 'View Details'}
                       </button>

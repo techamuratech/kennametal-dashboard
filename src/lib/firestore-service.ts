@@ -434,3 +434,16 @@ export const deleteWhatsNew = async (id: string): Promise<void> => {
   const docRef = doc(db, 'whatsNew', id);
   await deleteDoc(docRef);
 };
+
+export const markInquiryAsRead = async (inquiryId: string): Promise<void> => {
+  try {
+    const docRef = doc(db, 'inquiries', inquiryId);
+    await updateDoc(docRef, {
+      isRead: true,
+      readAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error marking inquiry as read:', error);
+    throw error;
+  }
+};
