@@ -12,8 +12,11 @@ interface InquiryWithUser extends Inquiry {
 
 export default function InquiriesPage() {
   const [inquiries, setInquiries] = useState<InquiryWithUser[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [inquiriesPerPage] = useState(10);
 
   const { userData } = useAuth();
   const userRole = userData?.role || 'pending';
@@ -40,7 +43,14 @@ export default function InquiriesPage() {
           user: usersMap.get(inquiry.user_id)
         }));
 
-        setInquiries(inquiriesWithUsers);
+        // Sort by creation date descending (newest first)
+        const sortedInquiries = inquiriesWithUsers.sort((a, b) => {
+          const aTime = new Date(a.created_at).getTime();
+          const bTime = new Date(b.created_at).getTime();
+          return bTime - aTime;
+        });
+
+        setInquiries(sortedInquiries);
       }
     } catch (error) {
       console.error('Error fetching inquiries:', error);
@@ -69,6 +79,30 @@ export default function InquiriesPage() {
     });
   };
 
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const filteredInquiries = inquiries.filter(inquiry => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      inquiry.user?.displayName?.toLowerCase().includes(searchLower) ||
+      inquiry.user?.email?.toLowerCase().includes(searchLower) ||
+      inquiry.user?.companyName?.toLowerCase().includes(searchLower) ||
+      inquiry.user?.phoneNumber?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Pagination logic
+  const indexOfLastInquiry = currentPage * inquiriesPerPage;
+  const indexOfFirstInquiry = indexOfLastInquiry - inquiriesPerPage;
+  const currentInquiries = filteredInquiries.slice(indexOfFirstInquiry, indexOfLastInquiry);
+  const totalPages = Math.ceil(filteredInquiries.length / inquiriesPerPage);
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
   if (loading) {
       return (
         <div className="flex justify-center items-center h-64">
@@ -89,6 +123,21 @@ export default function InquiriesPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-gray-900">Inquiries</h1>
+      
+      <div className="mb-4">
+        <label htmlFor="searchInquiries" className="block text-sm font-medium text-gray-700 mb-1">
+          Search Inquiries
+        </label>
+        <input
+          id="searchInquiries"
+          type="text"
+          placeholder="Search by user name, email, company, or phone..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+        />
+      </div>
+
       <div className="overflow-x-auto">
         <table className="min-w-full shadow-xl rounded-lg overflow-hidden bg-white">
           <thead className="bg-[#3785C7]">
@@ -102,8 +151,8 @@ export default function InquiriesPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {inquiries.length > 0 ? (
-              inquiries.map((inquiry) => (
+            {currentInquiries.length > 0 ? (
+              currentInquiries.map((inquiry) => (
                 <>
                   <tr key={inquiry.id} className="hover:bg-gray-50">
                     <td className="py-4 px-6 border-r-2">
@@ -232,6 +281,68 @@ export default function InquiriesPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-4">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{indexOfFirstInquiry + 1}</span> to{' '}
+                <span className="font-medium">{Math.min(indexOfLastInquiry, filteredInquiries.length)}</span> of{' '}
+                <span className="font-medium">{filteredInquiries.length}</span> results
+              </p>
+            </div>
+            <div>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                <button
+                  onClick={() => paginate(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                  <button
+                    key={number}
+                    onClick={() => paginate(number)}
+                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                      currentPage === number
+                        ? 'z-10 bg-primary-50 border-primary-500 text-primary-600'
+                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {number}
+                  </button>
+                ))}
+                <button
+                  onClick={() => paginate(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

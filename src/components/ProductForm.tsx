@@ -73,6 +73,7 @@ export default function ProductForm({
   const [imageFiles, setImageFiles] = useState<{ [key: string]: File | null }>(
     {}
   );
+  const [selectedRelatedParts, setSelectedRelatedParts] = useState<string[]>([]);
 
   const addApplicationField = () => {
     setApplicationFields([...applicationFields, { uses: "", icon: "" }]);
@@ -151,6 +152,20 @@ export default function ProductForm({
     setValue("overviewPoints", newFields);
   };
 
+  const toggleRelatedPart = (partId: string, partTitle: string) => {
+    const newSelection = selectedRelatedParts.includes(partId)
+      ? selectedRelatedParts.filter(id => id !== partId)
+      : [...selectedRelatedParts, partId];
+    
+    const newSelectionNames = newSelection.map(id => {
+      const part = relatedParts.find(p => p.id === id);
+      return part ? part.title : '';
+    }).filter(Boolean);
+    
+    setSelectedRelatedParts(newSelection);
+    setValue("related_parts", newSelectionNames);
+  };
+
   // Watch for category changes
   const watchedCategoryId = watch("categoryId");
 
@@ -225,6 +240,7 @@ export default function ProductForm({
       setValue("featured", productData.featured || false);
       setValue("productPrice", productData.productPrice || 0);
       setValue("related_parts", productData.related_parts || []);
+      setSelectedRelatedParts(productData.related_parts || []);
 
       // Set application fields
       if (productData.application && productData.application.length > 0) {
@@ -419,18 +435,29 @@ export default function ProductForm({
                 >
                   Related Parts
                 </label>
-                <select
-                  id="related_parts"
-                  {...register("related_parts")}
-                  multiple
-                  className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                >
+                <div className="mt-1 border border-gray-300 rounded-md max-h-48 overflow-y-auto bg-white">
                   {relatedParts.map((part) => (
-                    <option key={part.id} value={part.id}>
-                      {part.title}
-                    </option>
+                    <div
+                      key={part.id}
+                      onClick={() => toggleRelatedPart(part.id, part.title)}
+                      className={`px-3 py-2 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
+                        selectedRelatedParts.includes(part.id)
+                          ? 'bg-primary-50 text-primary-700'
+                          : 'text-gray-900'
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedRelatedParts.includes(part.id)}
+                          onChange={() => {}} // Handled by onClick
+                          className="mr-2 text-primary-600 focus:ring-primary-500"
+                        />
+                        {part.title}
+                      </div>
+                    </div>
                   ))}
-                </select>
+                </div>
               </div>
 
               <div className="col-span-1 sm:col-span-6">

@@ -27,12 +27,24 @@ export default function CategoriesPage() {
     setLoading(true);
     try {
       const data = await getCategories();
-      setCategories(data);
+      // Sort by most recent timestamp (updatedAt or createdAt) descending
+      const sortedData = data.sort((a, b) => {
+        const aTime = (a.updatedAt?.seconds || a.createdAt?.seconds || 0);
+        const bTime = (b.updatedAt?.seconds || b.createdAt?.seconds || 0);
+        return bTime - aTime;
+      });
+      setCategories(sortedData);
     } catch (error) {
       console.error('Error fetching categories:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return 'Unknown';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   };
 
   const handleDelete = async (id: string) => {
@@ -108,6 +120,10 @@ export default function CategoriesPage() {
                   <div className="ml-4">
                     <h3 className="text-lg font-medium text-gray-900">{category.title}</h3>
                     <p className="text-sm text-gray-500">{category.description}</p>
+                    <div className="mt-1 text-xs text-gray-400">
+                      {category.updatedAt ? `Updated: ${formatDate(category.updatedAt)}` : 
+                       category.createdAt ? `Created: ${formatDate(category.createdAt)}` : ''}
+                    </div>
                   </div>
                 </div>
               </div>
