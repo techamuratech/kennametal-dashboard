@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getAppUsers, updateAppUser, resetPassword } from '@/lib/firestore-service';
+import { getAppUsers, updateAppUser, resetPassword, createLogEntry } from '@/lib/firestore-service';
 import { useAuth } from '@/lib/auth-context';
 import { hasPermission } from '@/lib/rbac';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -54,10 +54,23 @@ export default function AppUsersPage() {
     if (!hasPermission(userRole, 'update', 'app_users')) return;
 
     try {
+      const user = appUsers.find(u => u.id === userId);
       await updateAppUser(userId, { isAuthenticated });
       setAppUsers(appUsers.map(user => 
         user.id === userId ? { ...user, isAuthenticated } : user
       ));
+
+      // Log the authentication status change
+      if (userData && user) {
+        await createLogEntry({
+          uid: userData.email,
+          action: 'app_user_authentication_changed',
+          details: {
+            userEmail: user.email,
+            newStatus: isAuthenticated ? 'Authenticated' : 'Not Authenticated',
+          }
+        });
+      }
     } catch (error) {
       console.error('Error updating user authentication status:', error);
     }
