@@ -1,34 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { getWhatsNew, deleteWhatsNew, createLogEntry, WhatsNew } from '@/lib/firestore-service';
 import { useAuth } from '@/lib/auth-context';
 import { hasPermission } from '@/lib/rbac';
 import { formatDistanceToNow } from 'date-fns';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import Image from 'next/image';
 
 export default function WhatsNewPage() {
   const [whatsNewItems, setWhatsNewItems] = useState<WhatsNew[]>([]);
   const [loading, setLoading] = useState(true);
   const { userData } = useAuth();
-  const userRole = userData?.role || 'pending';
+  
+  const userRole = useMemo(() => userData?.role || 'pending', [userData?.role]);
+  const canCreate = useMemo(() => hasPermission(userRole, 'create', 'whats_new'), [userRole]);
+  const canDelete = useMemo(() => hasPermission(userRole, 'delete', 'whats_new'), [userRole]);
 
-  const canCreate = hasPermission(userRole, 'create', 'whats_new');
-  const canDelete = hasPermission(userRole, 'delete', 'whats_new');
-
-  useEffect(() => {
-    fetchWhatsNew();
-  }, [userRole]); // Add userRole as dependency
-
-  const fetchWhatsNew = async () => {
-    if (!userRole || userRole === 'pending') return; // Add early return
+  const fetchWhatsNew = useCallback(async () => {
+    if (!userRole || userRole === 'pending') return;
     
     setLoading(true);
     try {
       if (hasPermission(userRole, 'read', 'whats_new')) {
         const data = await getWhatsNew();
-        // Sort by time descending
         const sortedData = data.sort((a, b) => {
           if (!a.time || !b.time) return 0;
           return b.time.seconds - a.time.seconds;
@@ -40,42 +36,43 @@ export default function WhatsNewPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userRole]);
 
-  const handleDelete = async (id: string, name: string) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      try {
-        await deleteWhatsNew(id);
-        if (userData) {
-          await createLogEntry({
-            uid: userData.email,
-            action: 'whats_new_deleted',
-            details: {
-              whatsNewId: id,
-              whatsNewName: name,
-            }
-          });
-        }
-        fetchWhatsNew();
-      } catch (error) {
-        console.error('Error deleting whats new item:', error);
+  useEffect(() => {
+    fetchWhatsNew();
+  }, [fetchWhatsNew]);
+
+  const handleDelete = useCallback(async (id: string, name: string) => {
+    if (!window.confirm('Are you sure you want to delete this item?')) return;
+    
+    try {
+      await deleteWhatsNew(id);
+      if (userData) {
+        await createLogEntry({
+          uid: userData.email,
+          action: 'whats_new_deleted',
+          details: { whatsNewId: id, whatsNewName: name }
+        });
       }
+      await fetchWhatsNew();
+    } catch (error) {
+      console.error('Error deleting whats new item:', error);
     }
-  };
+  }, [userData, fetchWhatsNew]);
 
-  const formatDate = (timestamp: any) => {
+  const formatDate = useCallback((timestamp: any) => {
     if (!timestamp) return 'Unknown';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000);
     return formatDistanceToNow(date, { addSuffix: true });
-  };
+  }, []);
 
   if (loading) {
-      return (
-        <div className="flex justify-center items-center h-64">
-          <LoadingSpinner size="lg" message="Loading What's New..." />
-        </div>
-      );
-    }
+    return (
+      <div className="flex justify-center items-center h-64">
+        <LoadingSpinner size="lg" message="Loading What's New..." />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -96,11 +93,15 @@ export default function WhatsNewPage() {
                 <div className="px-4 py-4 flex items-center justify-between">
                   <div className="flex items-center">
                     {item.image && (
-                      <img
-                        className="h-12 w-12 rounded-lg object-cover mr-4"
-                        src={item.image}
-                        alt={item.name}
-                      />
+                      <div className="relative h-12 w-12 mr-4">
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          className="rounded-lg object-cover"
+                          sizes="48px"
+                        />
+                      </div>
                     )}
                     <div className="flex-1">
                       <div className="flex items-center justify-between">

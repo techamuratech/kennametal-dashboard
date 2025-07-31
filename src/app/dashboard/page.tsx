@@ -257,7 +257,7 @@ export default function Dashboard() {
         )}
 
         {/* Logs Stats */}
-        {hasPermission(userRole, 'read', 'logs') && (
+        {/* {hasPermission(userRole, 'read', 'logs') && (
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center">
@@ -284,7 +284,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Inquiries Stats */}
         {hasPermission(userRole, 'read', 'inquiries') && (
