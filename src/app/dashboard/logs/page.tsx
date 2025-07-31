@@ -87,6 +87,7 @@ export default function LogsPage() {
           placeholder="Search by user, action, or details..."
           value={searchTerm}
           onChange={handleSearchChange}
+          maxLength={150}
           className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
         />
       </div>

@@ -60,8 +60,12 @@ export default function NewNotificationPage() {
             <label htmlFor="name" className="form-label">Notification Title</label>
             <input
               id="name"
+              maxLength={150}
               className="form-input"
-              {...register('name', { required: 'Notification title is required' })}
+              {...register('name', { 
+                required: 'Notification title is required',
+                maxLength: { value: 150, message: 'Notification title must be 150 characters or less' }
+              })}
             />
             {errors.name && <p className="text-red-600 text-sm">{errors.name.message}</p>}
           </div>
@@ -71,8 +75,12 @@ export default function NewNotificationPage() {
             <textarea
               id="description"
               rows={4}
+              maxLength={350}
               className="form-input"
-              {...register('description', { required: 'Description is required' })}
+              {...register('description', { 
+                required: 'Description is required',
+                maxLength: { value: 350, message: 'Description must be 350 characters or less' }
+              })}
             />
             {errors.description && <p className="text-red-600 text-sm">{errors.description.message}</p>}
           </div>
@@ -82,9 +90,12 @@ export default function NewNotificationPage() {
             <input
               id="link"
               type="url"
+              maxLength={150}
               className="form-input"
               placeholder="https://example.com"
-              {...register('link')}
+              {...register('link', {
+                maxLength: { value: 150, message: 'Link must be 150 characters or less' }
+              })}
             />
             {errors.link && <p className="text-red-600 text-sm">{errors.link.message}</p>}
           </div>

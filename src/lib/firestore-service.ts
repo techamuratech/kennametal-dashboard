@@ -111,6 +111,7 @@ export interface AppUser {
 export interface InquiryItemDetail {
   product_id: string;
   product_name: string;
+  quantity?: number;
   timestamp: string;
 }
 

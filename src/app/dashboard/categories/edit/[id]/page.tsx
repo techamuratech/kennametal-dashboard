@@ -59,7 +59,7 @@ export default function EditCategoryPage() {
       await updateCategory(category_id, updateData);
       if (userData) {
         await createLogEntry({
-          uid: userData.uid,
+          uid: userData.email,
           action: 'category_updated',
           details: {
             categoryId: category_id,
@@ -92,8 +92,12 @@ export default function EditCategoryPage() {
             <label htmlFor="name" className="form-label">Category Name</label>
             <input
               id="title"
+              maxLength={150}
               className="form-input"
-              {...register('title', { required: 'Category title is required' })}
+              {...register('title', { 
+                required: 'Category title is required',
+                maxLength: { value: 150, message: 'Category title must be 150 characters or less' }
+              })}
             />
             {errors.title && <p className="text-red-600 text-sm">{errors.title.message}</p>}
           </div>

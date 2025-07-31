@@ -151,7 +151,8 @@ export default function InquiriesPage() {
           placeholder="Search by user name, email, company, or phone..."
           value={searchTerm}
           onChange={handleSearchChange}
-          className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          maxLength={150}
+          className="block w-1/2 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
         />
       </div>
 
@@ -169,12 +170,14 @@ export default function InquiriesPage() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentInquiries.length > 0 ? (
-              currentInquiries.map((inquiry) => (
+              currentInquiries.map((inquiry) => {
+                const isUnread = !inquiry.isRead; // Check once and reuse
+                return (
                 <>
-                  <tr key={inquiry.id} className={`hover:bg-gray-50 ${!inquiry.isRead ? 'bg-blue-50' : ''}`}>
+                  <tr key={inquiry.id} className={`hover:bg-gray-50 ${isUnread ? 'bg-blue-50' : ''}`}>
                     <td className="py-4 px-6 border-r-2">
                       <div className="flex items-center">
-                        {!inquiry.isRead && (
+                        {isUnread && (
                           <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 flex-shrink-0"></div>
                         )}
                         <div>
@@ -203,13 +206,8 @@ export default function InquiriesPage() {
                     </td>
                     <td className="py-4 px-6 border-r-2">
                       <div className="text-sm text-gray-900">
-                        {inquiry.inquiry?.length || 0} submissions
+                        {inquiry.inquiry?.length || 0} submissions ({inquiry.inquiry?.reduce((total, submission) => total + (submission.items?.length || 0), 0) || 0} items)
                       </div>
-                      {inquiry.inquiry && inquiry.inquiry.length > 0 && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {inquiry.inquiry.reduce((total, submission) => total + (submission.items?.length || 0), 0)} total items
-                        </div>
-                      )}
                     </td>
                     <td className="py-4 px-6 border-r-2">
                       <div className="text-sm text-gray-900">
@@ -226,7 +224,7 @@ export default function InquiriesPage() {
                       <button
                         onClick={() => toggleRowExpansion(inquiry.id!)}
                         className={`text-sm font-medium ${
-                          !inquiry.isRead 
+                          isUnread 
                             ? 'text-blue-600 hover:text-blue-900 font-semibold' 
                             : 'text-blue-600 hover:text-blue-900'
                         }`}
@@ -258,7 +256,9 @@ export default function InquiriesPage() {
                                       {(submission.items || []).map((item, itemIndex) => (
                                         <div key={itemIndex} className="bg-gray-50 p-2 rounded">
                                           <div className="font-medium text-gray-900">{item.product_name || 'Unknown Product'}</div>
-                                          <div className="text-sm text-gray-500">ID: {item.product_id || 'N/A'}</div>
+                                          <div className="text-sm text-gray-500">
+                                            ID: {item.product_id || 'N/A'} | Quantity: {item.quantity || 1}
+                                          </div>
                                           <div className="text-xs text-gray-400">
                                             Added: {item.timestamp ? formatDate(item.timestamp) : 'N/A'}
                                           </div>
@@ -298,7 +298,7 @@ export default function InquiriesPage() {
                     </tr>
                   )}
                 </>
-              ))
+              )})
             ) : (
               <tr>
                 <td colSpan={6} className="py-4 px-6 text-center text-gray-500">

@@ -302,8 +302,27 @@ export default function ProductForm({
 
       if (isEditing && productData) {
         await updateProduct(productData.id, productToSave);
+        if (userData) {
+          await createLogEntry({
+            uid: userData.email,
+            action: 'product_updated',
+            details: {
+              productId: productData.id,
+              productName: data.title,
+            }
+          });
+        }
       } else {
         await createProduct(productToSave);
+        if (userData) {
+          await createLogEntry({
+            uid: userData.email,
+            action: 'product_created',
+            details: {
+              productName: data.title,
+            }
+          });
+        }
       }
 
       router.push("/dashboard/products");
@@ -383,8 +402,10 @@ export default function ProductForm({
                 <input
                   type="text"
                   id="title"
+                  maxLength={150}
                   {...register("title", {
                     required: "Product title is required",
+                    maxLength: { value: 150, message: "Title must be 150 characters or less" }
                   })}
                   className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 py-2 px-3 border rounded-md"
                 />
@@ -405,8 +426,10 @@ export default function ProductForm({
                 <input
                   type="text"
                   id="subtitle"
+                  maxLength={150}
                   {...register("subtitle", {
                     required: "Product subtitle is required",
+                    maxLength: { value: 150, message: "Subtitle must be 150 characters or less" }
                   })}
                   className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 py-2 px-3 border rounded-md"
                 />
@@ -455,8 +478,10 @@ export default function ProductForm({
                 <input
                   type="text"
                   id="material_number"
+                  maxLength={150}
                   {...register("material_number", {
                     required: "Material number is required",
+                    maxLength: { value: 150, message: "Material number must be 150 characters or less" }
                   })}
                   className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 py-2 px-3 border rounded-md"
                 />
@@ -477,8 +502,10 @@ export default function ProductForm({
                 <input
                   type="text"
                   id="iso"
+                  maxLength={150}
                   {...register("iso", {
                     required: "ISO Catalog ID is required",
+                    maxLength: { value: 150, message: "ISO Catalog ID must be 150 characters or less" }
                   })}
                   className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 py-2 px-3 border rounded-md"
                 />
@@ -590,7 +617,10 @@ export default function ProductForm({
                   <input
                     type="text"
                     id="material_number"
-                    {...register("material_number")}
+                    maxLength={150}
+                    {...register("material_number", {
+                      maxLength: { value: 150, message: "Material number must be 150 characters or less" }
+                    })}
                     className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border"
                   />
                 </div>
@@ -607,7 +637,10 @@ export default function ProductForm({
                   <input
                     type="text"
                     id="iso"
-                    {...register("iso")}
+                    maxLength={150}
+                    {...register("iso", {
+                      maxLength: { value: 150, message: "ISO Catalog ID must be 150 characters or less" }
+                    })}
                     className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border"
                   />
                 </div>
@@ -668,7 +701,10 @@ export default function ProductForm({
                   <input
                     type="text"
                     id="cutting_material"
-                    {...register("cutting_material")}
+                    maxLength={150}
+                    {...register("cutting_material", {
+                      maxLength: { value: 150, message: "Cutting material must be 150 characters or less" }
+                    })}
                     className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border"
                   />
                 </div>
@@ -722,7 +758,10 @@ export default function ProductForm({
                   <input
                     type="text"
                     id="shank_size"
-                    {...register("shank_size")}
+                    maxLength={150}
+                    {...register("shank_size", {
+                      maxLength: { value: 150, message: "Shank size must be 150 characters or less" }
+                    })}
                     className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border"
                   />
                 </div>
@@ -772,6 +811,7 @@ export default function ProductForm({
                       <input
                         type="text"
                         value={field.uses}
+                        maxLength={150}
                         onChange={(e) =>
                           updateApplicationField(index, "uses", e.target.value)
                         }

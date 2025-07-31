@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getUsers, updateUser, resetPassword } from '@/lib/firestore-service';
+import { getUsers, updateUser, resetPassword, createLogEntry } from '@/lib/firestore-service';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { hasPermission } from '@/lib/rbac';
@@ -70,8 +70,24 @@ export default function UsersPage() {
     if (userRole !== 'master') return;
 
     try {
+      const user = users.find(u => u.id === userId);
       await updateUser(userId, { status: newStatus });
       setUsers(users.map(user => user.id === userId ? { ...user, status: newStatus } : user));
+      
+      // Log the status change
+      if (userData && user) {
+        await createLogEntry({
+          uid: userData.email,
+          action: 'user_status_changed',
+          details: {
+            userId: userId,
+            userEmail: user.email,
+            oldStatus: user.status || 'active',
+            newStatus: newStatus,
+            changedBy: userData.email
+          }
+        });
+      }
     } catch (error) {
       console.error('Error updating user status:', error);
     }
@@ -148,6 +164,18 @@ export default function UsersPage() {
       const usersList = await getUsers();
       setUsers(usersList);
       
+      // Log the user creation
+      if (userData) {
+        await createLogEntry({
+          uid: userData.email,
+          action: 'user_created',
+          details: {
+            userEmail: newUserEmail,
+            userRole: newUserRole
+          }
+        });
+      }
+      
       alert('User created successfully');
     } catch (error) {
       console.error('Error adding user:', error);
@@ -199,6 +227,20 @@ export default function UsersPage() {
       setConfirmNewPassword('');
       setResetPasswordError('');
       
+      // Log the password reset
+      if (userData) {
+        const user = users.find(u => u.id === userId);
+        await createLogEntry({
+          uid: userData.email,
+          action: 'user_password_reset',
+          details: {
+            userId: userId,
+            userEmail: user?.email || 'Unknown',
+            resetBy: userData.email
+          }
+        });
+      }
+      
       alert('Password updated successfully');
     } catch (error) {
       console.error('Error updating password:', error);
@@ -228,6 +270,7 @@ export default function UsersPage() {
           placeholder="Search by email..."
           value={searchTerm}
           onChange={handleSearchChange}
+          maxLength={150}
           className="block w-1/2 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
         />
       </div>
@@ -254,6 +297,7 @@ export default function UsersPage() {
                 value={newUserEmail}
                 onChange={(e) => setNewUserEmail(e.target.value)}
                 required
+                maxLength={50}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               />
             </div>
@@ -265,6 +309,7 @@ export default function UsersPage() {
                 onChange={(e) => setNewUserPassword(e.target.value)}
                 required
                 minLength={6}
+                maxLength={50}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               />
             </div>
@@ -276,6 +321,7 @@ export default function UsersPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 minLength={6}
+                maxLength={50}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               />
             </div>
@@ -332,6 +378,7 @@ export default function UsersPage() {
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
                 minLength={6}
+                maxLength={50}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               />
             </div>
@@ -343,6 +390,7 @@ export default function UsersPage() {
                 onChange={(e) => setConfirmNewPassword(e.target.value)}
                 required
                 minLength={6}
+                maxLength={50}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               />
             </div>

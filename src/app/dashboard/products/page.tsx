@@ -72,6 +72,7 @@ export default function ProductsPage() {
           action: 'product_deleted',
           details: {
             productId: id,
+            productName: products.find(p => p.id === id)?.title || ''
           }
         });
       }
@@ -144,6 +145,7 @@ export default function ProductsPage() {
             placeholder="Search by product title..."
             value={searchTerm}
             onChange={handleSearchChange}
+            maxLength={150}
             className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
           />
         </div>
