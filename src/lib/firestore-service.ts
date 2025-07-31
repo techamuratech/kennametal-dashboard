@@ -80,7 +80,7 @@ export interface User {
 
 export interface LogEntry {
   id: string;
-  uid: string;
+  uid?: string | null;
   action: string;
   details: Record<string, any>;
   timestamp?: Timestamp;
@@ -133,6 +133,7 @@ export interface Inquiry {
   created_at: string;
   inquiry?: InquirySubmission[];
   cart_items?: CartItem[];
+  isRead?: boolean;
 }
 
 export interface Notification {

@@ -1,20 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getUsers, updateUser, resetPassword, createLogEntry } from '@/lib/firestore-service';
+import { getUsers, updateUser, resetPassword, createLogEntry, User } from '@/lib/firestore-service';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { hasPermission } from '@/lib/rbac';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { db } from '@/lib/firebase';
-
-interface User {
-  id: string;
-  email: string;
-  role: string;
-  password?: string; // Add password field for master users
-  hashedPassword?: string; // Store hashed password
-  status?: string; // Add status field for user activity
-}
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -59,8 +50,8 @@ export default function UsersPage() {
     if (userRole !== 'master') return;
 
     try {
-      await updateUser(userId, { role: newRole });
-      setUsers(users.map(user => user.id === userId ? { ...user, role: newRole } : user));
+      await updateUser(userId, { role: newRole as 'master' | 'admin' | 'user' | 'pending' });
+      setUsers(users.map(user => user.id === userId ? { ...user, role: newRole as 'master' | 'admin' | 'user' | 'pending' } : user));
     } catch (error) {
       console.error('Error updating user role:', error);
     }
@@ -71,8 +62,8 @@ export default function UsersPage() {
 
     try {
       const user = users.find(u => u.id === userId);
-      await updateUser(userId, { status: newStatus });
-      setUsers(users.map(user => user.id === userId ? { ...user, status: newStatus } : user));
+      await updateUser(userId, { status: newStatus as 'active' | 'disabled' });
+      setUsers(users.map(user => user.id === userId ? { ...user, status: newStatus as 'active' | 'disabled' } : user));
       
       // Log the status change
       if (userData && user) {
@@ -465,7 +456,7 @@ export default function UsersPage() {
                     <select
                       className="form-input text-sm"
                       value={user.status || 'active'}
-                      onChange={(e) => handleStatusChange(user.id, e.target.value)}
+                      onChange={(e) => user.id && handleStatusChange(user.id, e.target.value)}
                     >
                       <option value="active">Active</option>
                       <option value="disabled">Inactive</option>
@@ -473,7 +464,7 @@ export default function UsersPage() {
                     <select
                       className="form-input text-sm"
                       value={user.role}
-                      onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                      onChange={(e) => user.id && handleRoleChange(user.id, e.target.value)}
                     >
                       <option value="master">Master</option>
                       <option value="admin">Admin</option>
@@ -481,7 +472,7 @@ export default function UsersPage() {
                       <option value="pending">Approval Pending</option>
                     </select>
                     <button
-                      onClick={() => setShowResetPassword(user.id)}
+                      onClick={() => user.id && setShowResetPassword(user.id)}
                       className="text-sm bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
                     >
                       Reset Password

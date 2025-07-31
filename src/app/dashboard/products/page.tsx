@@ -189,7 +189,7 @@ export default function ProductsPage() {
                         </div>
                       </div>
                       <div className="mt-1 text-xs text-gray-400">
-                        {console.log("produc updated", product.updatedAt)}
+                        {/* {console.log("produc updated", product.updatedAt)} */}
                         {product.updatedAt ? `Updated: ${formatDate(product.updatedAt)}` : 
                          product.createdAt ? `Created: ${formatDate(product.createdAt)}` : ''}
                       </div>

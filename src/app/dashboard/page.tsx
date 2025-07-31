@@ -137,7 +137,7 @@ export default function Dashboard() {
       
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {/* Product Stats */}
-        {hasPermission(userRole, 'read', 'products') && (
+        {userRole && hasPermission(userRole, 'read', 'products') && (
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center">
@@ -167,7 +167,7 @@ export default function Dashboard() {
         )}
 
         {/* Category Stats */}
-        {hasPermission(userRole, 'read', 'categories') && (
+        {userRole && hasPermission(userRole, 'read', 'categories') && (
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center">
@@ -197,7 +197,7 @@ export default function Dashboard() {
         )}
 
         {/* User Stats */}
-        {hasPermission(userRole, 'read', 'users') && (
+        {userRole && hasPermission(userRole, 'read', 'users') && (
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center">
@@ -227,7 +227,7 @@ export default function Dashboard() {
         )}
 
         {/* App Users Stats */}
-        {hasPermission(userRole, 'read', 'app_users') && (
+        {userRole && hasPermission(userRole, 'read', 'app_users') && (
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center">
@@ -287,7 +287,7 @@ export default function Dashboard() {
         )} */}
 
         {/* Inquiries Stats */}
-        {hasPermission(userRole, 'read', 'inquiries') && (
+        {userRole && hasPermission(userRole, 'read', 'inquiries') && (
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center">
@@ -317,7 +317,7 @@ export default function Dashboard() {
         )}
 
         {/* Notifications Stats */}
-        {hasPermission(userRole, 'read', 'notifications') && (
+        {userRole && hasPermission(userRole, 'read', 'notifications') && (
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center">
@@ -347,7 +347,7 @@ export default function Dashboard() {
         )}
 
         {/* What's New Stats */}
-        {hasPermission(userRole, 'read', 'whats_new') && (
+        {userRole && hasPermission(userRole, 'read', 'whats_new') && (
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center">
@@ -378,7 +378,7 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Activity */}
-      {hasPermission(userRole, 'read', 'logs') && (
+      {userRole && hasPermission(userRole, 'read', 'logs') && (
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <div className="px-4 py-5 border-b border-gray-200 sm:px-6">
             <h3 className="text-lg leading-6 font-medium text-gray-900">Recent Activity</h3>
@@ -396,7 +396,7 @@ export default function Dashboard() {
                       <p className="text-sm font-medium text-primary-600 truncate">{log.action}</p>
                       <div className="ml-2 flex-shrink-0 flex">
                         <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          {new Date(log.timestamp.seconds * 1000).toLocaleString()}
+                          {log.timestamp && new Date(log.timestamp.seconds * 1000).toLocaleString()}
                         </p>
                       </div>
                     </div>

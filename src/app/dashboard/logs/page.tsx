@@ -1,17 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getLogs } from '@/lib/firestore-service';
+import { getLogs, LogEntry } from '@/lib/firestore-service';
 import { useAuth } from '@/lib/auth-context';
 import { hasPermission } from '@/lib/rbac';
 import LoadingSpinner from '@/components/LoadingSpinner';
-
-interface LogEntry {
-  id: string;
-  uid: string;
-  action: string;
-  details: any; // Adjust the type as necessary
-  timestamp: { seconds: number }; // Adjust the type as necessary
-}
 
 export default function LogsPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -107,7 +99,7 @@ export default function LogsPage() {
               <td className="px-6 py-4 whitespace-nowrap">{log.uid}</td>
               <td className="px-6 py-4 whitespace-nowrap">{log.action}</td>
               <td className="px-6 py-4 whitespace-nowrap">{JSON.stringify(log.details)}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{new Date(log.timestamp.seconds * 1000).toLocaleString()}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{log.timestamp ? new Date(log.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</td>
             </tr>
           ))}
         </tbody>

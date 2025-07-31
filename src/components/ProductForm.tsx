@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import {
   getCategories,
   createProduct,
@@ -13,9 +14,13 @@ import {
   uploadFile,
 } from "@/lib/firestore-service";
 import { useAuth } from "@/lib/auth-context";
-import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
-import { CKEditor } from "@ckeditor/ckeditor5-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+
+// Dynamically import CKEditor to prevent SSR issues
+const CKEditor = dynamic(() => import("@ckeditor/ckeditor5-react").then(mod => ({ default: mod.CKEditor })), {
+  ssr: false,
+  loading: () => <div className="h-32 bg-gray-100 rounded animate-pulse"></div>
+});
 
 interface ProductFormProps {
   productData?: any;
@@ -29,10 +34,26 @@ export default function ProductForm({
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [editorLoaded, setEditorLoaded] = useState(false);
+  const [ClassicEditor, setClassicEditor] = useState<any>(null);
   const router = useRouter();
   const { userData } = useAuth();
   const [relatedParts, setRelatedParts] = useState<RelatedPart[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  // Load ClassicEditor dynamically
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('@ckeditor/ckeditor5-build-classic')
+        .then((module) => {
+          setClassicEditor(() => module.default);
+          setEditorLoaded(true);
+        })
+        .catch((error) => {
+          console.error('Error loading CKEditor:', error);
+        });
+    }
+  }, []);
 
   const {
     register,
@@ -53,11 +74,12 @@ export default function ProductForm({
       abrasive: "",
       machine_hp: "",
       cutting_material: "",
+      application_field: "",
       application: [{ uses: "", icon: "" }],
       images: ["", ""],
       product_img: "",
       overview_img: "",
-      related_parts: [],
+      related_parts: [] as string[],
       featured: false,
       productPrice: 0,
     },
@@ -184,13 +206,12 @@ export default function ProductForm({
       setValue("categoryId", productData.categoryId);
       setSelectedCategory(productData.categoryId);
       setValue("material_number", productData.material_number || "");
-      setValue("cutting_conditions", productData.cutting_conditions || "");
+      setValue("cutting_condition", productData.cutting_condition || []);
       setValue("cutting_material", productData.cutting_material || "");
       setValue("machine_hp", productData.machine_hp || "");
       setValue("abrasive", productData.abrasive || "");
       setValue("shank_size", productData.shank_size || "");
       setValue("iso", productData.iso || "");
-      setValue("cutting_condition", productData.cutting_condition || []);
       setValue("featured", productData.featured || false);
       setValue("productPrice", productData.productPrice || 0);
       setValue("related_parts", productData.related_parts || []);
@@ -267,10 +288,11 @@ export default function ProductForm({
 
       // Upload gallery images
       galleryImages.forEach((_, index) => {
-        if (imageFiles[`gallery_${index}`]) {
+        const file = imageFiles[`gallery_${index}`];
+        if (file) {
           uploadPromises.push(
             uploadFile(
-              imageFiles[`gallery_${index}`],
+              file,
               `products/${data.title}/gallery-${index + 1}.jpg`
             ).then((url) => {
               if (!imageUrls.gallery) imageUrls.gallery = [];
@@ -555,39 +577,49 @@ export default function ProductForm({
                 >
                   Overview
                 </label>
-                <CKEditor
-                  editor={ClassicEditor}
-                  data={productData?.overview || ""}
-                  config={{
-                    toolbar: [
-                      "heading",
-                      "|",
-                      "bold",
-                      "italic",
-                      "link",
-                      "bulletedList",
-                      "numberedList",
-                      "|",
-                      "outdent",
-                      "indent",
-                      "|",
-                      "blockQuote",
-                      "insertTable",
-                      "undo",
-                      "redo",
-                    ],
-                  }}
-                  onChange={(event, editor) => {
-                    const data = editor.getData();
-                    setValue("overview", data);
-                  }}
-                  onBlur={(event, editor) => {
-                    console.log("Blur.", editor);
-                  }}
-                  onFocus={(event, editor) => {
-                    console.log("Focus.", editor);
-                  }}
-                />
+                {typeof window !== 'undefined' && editorLoaded && ClassicEditor && (
+                  <div className="mt-1">
+                    <CKEditor
+                      editor={ClassicEditor}
+                      data={productData?.overview || ""}
+                      config={{
+                        toolbar: [
+                          "heading",
+                          "|",
+                          "bold",
+                          "italic",
+                          "link",
+                          "bulletedList",
+                          "numberedList",
+                          "|",
+                          "outdent",
+                          "indent",
+                          "|",
+                          "blockQuote",
+                          "insertTable",
+                          "undo",
+                          "redo",
+                        ],
+                      }}
+                      onChange={(event: any, editor: any) => {
+                        const data = editor.getData();
+                        setValue("overview", data);
+                      }}
+                      onReady={(editor: any) => {
+                        console.log('Editor is ready to use!', editor);
+                      }}
+                      onBlur={(event: any, editor: any) => {
+                        console.log("Blur.", editor);
+                      }}
+                      onFocus={(event: any, editor: any) => {
+                        console.log("Focus.", editor);
+                      }}
+                    />
+                  </div>
+                )}
+                {(!editorLoaded || typeof window === 'undefined') && (
+                  <div className="h-32 bg-gray-100 rounded animate-pulse mt-1"></div>
+                )}
               </div>
             </div>
           </div>
@@ -658,7 +690,6 @@ export default function ProductForm({
                     <input
                       type="text"
                       id="application_field"
-                      {...register("application_field")}
                       className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border"
                     />
                   </div>

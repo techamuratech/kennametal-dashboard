@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { getProducts, getCategories, getUsers, getLogs, getNotifications, getWhatsNew, getInquiries, getAppUsers, LogEntry } from '@/lib/firestore-service';
-import { hasPermission } from '@/lib/rbac';
+import { hasPermission, UserRole } from '@/lib/rbac';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import dynamic from 'next/dynamic';
@@ -52,29 +52,29 @@ export default function DashboardStats({ userRole }: DashboardStatsProps) {
       // Batch all API calls for better performance
       const promises = [];
       
-      if (hasPermission(userRole, 'read', 'products')) {
+      if (hasPermission(userRole as UserRole, 'read', 'products')) {
         promises.push(getProducts().then(data => ({ type: 'products', data })));
       }
-      if (hasPermission(userRole, 'read', 'categories')) {
+      if (hasPermission(userRole as UserRole, 'read', 'categories')) {
         promises.push(getCategories().then(data => ({ type: 'categories', data })));
       }
-      if (hasPermission(userRole, 'read', 'users')) {
+      if (hasPermission(userRole as UserRole, 'read', 'users')) {
         promises.push(getUsers().then(data => ({ type: 'users', data })));
       }
-      if (hasPermission(userRole, 'read', 'notifications')) {
+      if (hasPermission(userRole as UserRole, 'read', 'notifications')) {
         promises.push(getNotifications().then(data => ({ type: 'notifications', data })));
       }
-      if (hasPermission(userRole, 'read', 'whats_new')) {
+      if (hasPermission(userRole as UserRole, 'read', 'whats_new')) {
         promises.push(getWhatsNew().then(data => ({ type: 'whats_new', data })));
       }
-      if (hasPermission(userRole, 'read', 'inquiries')) {
+      if (hasPermission(userRole as UserRole, 'read', 'inquiries')) {
         promises.push(getInquiries().then(data => ({ type: 'inquiries', data })));
       }
-      if (hasPermission(userRole, 'read', 'app_users')) {
+      if (hasPermission(userRole as UserRole, 'read', 'app_users')) {
         promises.push(getAppUsers().then(data => ({ type: 'app_users', data })));
       }
-      if (hasPermission(userRole, 'read', 'logs')) {
-        promises.push(getLogs(5, null).then(data => ({ type: 'logs', data: data.logs })));
+      if (hasPermission(userRole as UserRole, 'read', 'logs')) {
+        promises.push(getLogs(5, null).then(result => ({ type: 'logs', data: result.logs })));
       }
 
       const results = await Promise.allSettled(promises);
@@ -106,7 +106,7 @@ export default function DashboardStats({ userRole }: DashboardStatsProps) {
               newStats.appUserCount = data.length;
               break;
             case 'logs':
-              newStats.recentLogs = data;
+              newStats.recentLogs = data as LogEntry[];
               break;
           }
         }
@@ -132,7 +132,14 @@ export default function DashboardStats({ userRole }: DashboardStatsProps) {
     );
   }
 
-  const statCards = [
+  const statCards: Array<{
+    title: string;
+    value: number;
+    icon: any;
+    color: string;
+    link: string;
+    permission: 'products' | 'categories' | 'users' | 'logs' | 'inquiries' | 'app_users' | 'notifications' | 'whats_new';
+  }> = [
     {
       title: 'Total Products',
       value: stats.productCount,
@@ -187,7 +194,7 @@ export default function DashboardStats({ userRole }: DashboardStatsProps) {
     <>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {statCards.map((card) => {
-          if (!hasPermission(userRole, 'read', card.permission)) return null;
+          if (!hasPermission(userRole as UserRole, 'read', card.permission as 'products' | 'categories' | 'users' | 'logs' | 'inquiries' | 'app_users' | 'notifications' | 'whats_new')) return null;
           
           const Icon = card.icon;
           return (
@@ -222,7 +229,7 @@ export default function DashboardStats({ userRole }: DashboardStatsProps) {
       </div>
 
       {/* Recent Activity */}
-      {hasPermission(userRole, 'read', 'logs') && stats.recentLogs.length > 0 && (
+      {hasPermission(userRole as UserRole, 'read', 'logs') && stats.recentLogs.length > 0 && (
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Activity</h3>

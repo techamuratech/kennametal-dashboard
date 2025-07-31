@@ -152,7 +152,7 @@ export default function CategoriesPage() {
           ))
         ) : (
           <div className="col-span-full bg-white overflow-hidden shadow rounded-lg p-6 text-center text-gray-500">
-            No categories found. {canCreate && 'Add your first category!'}
+            No categories found.
           </div>
         )}
       </div>
