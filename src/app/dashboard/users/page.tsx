@@ -13,7 +13,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
-  const { userData } = useAuth();
+  const { userData, refreshUserData } = useAuth();
   const userRole = userData?.role || 'pending';
 
   const [showAddUser, setShowAddUser] = useState(false);
@@ -52,6 +52,22 @@ export default function UsersPage() {
     try {
       await updateUser(userId, { role: newRole as 'master' | 'admin' | 'user' | 'pending' });
       setUsers(users.map(user => user.id === userId ? { ...user, role: newRole as 'master' | 'admin' | 'user' | 'pending' } : user));
+      
+      // Log the role change
+      if (userData) {
+        const user = users.find(u => u.id === userId);
+        await createLogEntry({
+          uid: userData.email,
+          action: 'user_role_changed',
+          details: {
+            userId: userId,
+            userEmail: user?.email || 'Unknown',
+            oldRole: user?.role || 'unknown',
+            newRole: newRole,
+            changedBy: userData.email
+          }
+        });
+      }
     } catch (error) {
       console.error('Error updating user role:', error);
     }
@@ -267,12 +283,28 @@ export default function UsersPage() {
       </div>
 
       {userRole === 'master' && (
-        <div className="mb-6">
+        <div className="mb-6 flex gap-2">
           <button
             onClick={() => setShowAddUser(true)}
             className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700"
           >
             Add New User
+          </button>
+          <button
+            onClick={async () => {
+              setLoading(true);
+              try {
+                const usersList = await getUsers();
+                setUsers(usersList);
+              } catch (error) {
+                console.error('Error refreshing users:', error);
+              } finally {
+                setLoading(false);
+              }
+            }}
+            className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+          >
+            Refresh List
           </button>
         </div>
       )}
