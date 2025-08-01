@@ -81,7 +81,12 @@ export default function ViewNotificationPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Notification Title
             </label>
-            <p className="text-lg font-medium text-gray-900">{notification.name}</p>
+            <p className="text-lg font-medium text-gray-900">
+              {typeof notification.name === 'object' && notification.name !== null
+                ? JSON.stringify(notification.name)
+                : String(notification.name || 'Untitled')
+              }
+            </p>
           </div>
 
           <div>
@@ -96,7 +101,12 @@ export default function ViewNotificationPage() {
               Description
             </label>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-gray-900 whitespace-pre-wrap">{notification.description}</p>
+              <p className="text-gray-900 whitespace-pre-wrap">
+                {typeof notification.description === 'object' && notification.description !== null
+                  ? JSON.stringify(notification.description, null, 2)
+                  : String(notification.description || 'No description available')
+                }
+              </p>
             </div>
           </div>
 

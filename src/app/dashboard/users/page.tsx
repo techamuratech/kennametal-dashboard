@@ -62,11 +62,9 @@ export default function UsersPage() {
           uid: userData.email,
           action: 'user_role_changed',
           details: {
-            userId: userId,
             userEmail: user?.email || 'Unknown',
             oldRole: user?.role || 'unknown',
             newRole: newRole,
-            changedBy: userData.email
           }
         });
       }

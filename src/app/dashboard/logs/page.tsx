@@ -84,26 +84,34 @@ export default function LogsPage() {
         />
       </div>
 
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {currentLogs.map(log => (
-            <tr key={log.id}>
-              <td className="px-6 py-4 whitespace-nowrap">{log.uid}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{log.action}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{JSON.stringify(log.details)}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{log.timestamp ? new Date(log.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</td>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">User ID</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">Action</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/6">Details</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/6">Timestamp</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {currentLogs.map(log => (
+              <tr key={log.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.uid}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.action}</td>
+                <td className="px-6 py-4 text-sm text-gray-900 break-words max-w-xs">
+                  <div className="whitespace-pre-wrap break-all">
+                    {JSON.stringify(log.details, null, 2)}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {log.timestamp ? new Date(log.timestamp.seconds * 1000).toLocaleString() : 'N/A'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {filteredLogs.length === 0 && !loading && (
         <div className="text-center py-8 text-gray-500">
