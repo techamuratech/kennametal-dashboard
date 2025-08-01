@@ -92,6 +92,25 @@ export default function ProductForm({
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [selectedRelatedParts, setSelectedRelatedParts] = useState<string[]>([]);
   const [imageErrors, setImageErrors] = useState<{ [key: string]: string }>({});
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+
+  const validateImageSize = (file: File, fieldName: string): boolean => {
+    if (file.size > MAX_FILE_SIZE) {
+      setImageErrors(prev => ({
+        ...prev,
+        [fieldName]: `Image size must be less than 2MB. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`
+      }));
+      return false;
+    }
+    
+    // Clear error if file is valid
+    setImageErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[fieldName];
+      return newErrors;
+    });
+    return true;
+  };
 
   const addApplicationField = () => {
     setApplicationFields([...applicationFields, { uses: "", icon: "" }]);
@@ -117,6 +136,10 @@ export default function ProductForm({
   };
 
   const handleApplicationIconUpload = async (index: number, file: File) => {
+    if (!validateImageSize(file, `app_icon_${index}`)) {
+      return;
+    }
+    
     try {
       const iconUrl = await uploadFile(
         file,
@@ -129,17 +152,15 @@ export default function ProductForm({
   };
 
   const toggleRelatedPart = (partId: string, partTitle: string) => {
-    const newSelection = selectedRelatedParts.includes(partId)
-      ? selectedRelatedParts.filter(id => id !== partId)
-      : [...selectedRelatedParts, partId];
+    let updatedParts;
+    if (selectedRelatedParts.includes(partId)) {
+      updatedParts = selectedRelatedParts.filter(id => id !== partId);
+    } else {
+      updatedParts = [...selectedRelatedParts, partId];
+    }
     
-    const newSelectionNames = newSelection.map(id => {
-      const part = relatedParts.find(p => p.id === id);
-      return part ? part.title : '';
-    }).filter(Boolean);
-    
-    setSelectedRelatedParts(newSelection);
-    setValue("related_parts", newSelectionNames);
+    setSelectedRelatedParts(updatedParts);
+    setValue("related_parts", updatedParts);
   };
 
   // Watch for category changes
@@ -189,6 +210,52 @@ export default function ProductForm({
         ]);
         setCategories(categoriesData);
         setRelatedParts(relatedPartsData);
+
+        // If editing, populate the form with existing data AFTER fetching related parts
+        if (isEditing && productData) {
+          setValue("title", productData.title);
+          setValue("subtitle", productData.subtitle);
+          setValue("overview", productData.overview);
+          setValue("categoryId", productData.categoryId);
+          setSelectedCategory(productData.categoryId);
+          setValue("material_number", productData.material_number || "");
+          setValue("cutting_condition", productData.cutting_condition || []);
+          setValue("cutting_material", productData.cutting_material || "");
+          setValue("machine_hp", productData.machine_hp || "");
+          setValue("abrasive", productData.abrasive || "");
+          setValue("shank_size", productData.shank_size || "");
+          setValue("iso", productData.iso || "");
+          setValue("featured", productData.featured || false);
+          setValue("productPrice", productData.productPrice || 0);
+
+          // Set related parts - find IDs from titles
+          if (productData.related_parts && Array.isArray(productData.related_parts)) {
+            const relatedPartIds = productData.related_parts.map((partTitle: string) => {
+              const foundPart = relatedPartsData.find(part => part.title === partTitle);
+              return foundPart ? foundPart.id : null;
+            }).filter(Boolean);
+            
+            setSelectedRelatedParts(relatedPartIds);
+            setValue("related_parts", productData.related_parts);
+          }
+
+          // Set application fields
+          if (productData.application && productData.application.length > 0) {
+            setApplicationFields(productData.application);
+            setValue("application", productData.application);
+          }
+
+          // Set gallery images
+          if (productData.images && productData.images.length > 0) {
+            setGalleryImages(productData.images);
+            setValue("images", productData.images);
+          } else {
+            setGalleryImages([""]);
+          }
+        } else {
+          // Initialize with one empty gallery image for new products
+          setGalleryImages([""]);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -197,43 +264,6 @@ export default function ProductForm({
     };
 
     fetchData();
-
-    // If editing, populate the form with existing data
-    if (isEditing && productData) {
-      setValue("title", productData.title);
-      setValue("subtitle", productData.subtitle);
-      setValue("overview", productData.overview);
-      setValue("categoryId", productData.categoryId);
-      setSelectedCategory(productData.categoryId);
-      setValue("material_number", productData.material_number || "");
-      setValue("cutting_condition", productData.cutting_condition || []);
-      setValue("cutting_material", productData.cutting_material || "");
-      setValue("machine_hp", productData.machine_hp || "");
-      setValue("abrasive", productData.abrasive || "");
-      setValue("shank_size", productData.shank_size || "");
-      setValue("iso", productData.iso || "");
-      setValue("featured", productData.featured || false);
-      setValue("productPrice", productData.productPrice || 0);
-      setValue("related_parts", productData.related_parts || []);
-      setSelectedRelatedParts(productData.related_parts || []);
-
-      // Set application fields
-      if (productData.application && productData.application.length > 0) {
-        setApplicationFields(productData.application);
-        setValue("application", productData.application);
-      }
-
-      // Set gallery images
-      if (productData.images && productData.images.length > 0) {
-        setGalleryImages(productData.images);
-        setValue("images", productData.images);
-      } else {
-        setGalleryImages([""]);
-      }
-    } else {
-      // Initialize with one empty gallery image for new products
-      setGalleryImages([""]);
-    }
   }, [isEditing, productData, setValue]);
 
   const validateImages = () => {
@@ -379,6 +409,10 @@ export default function ProductForm({
   };
 
   const handleGalleryImageUpload = async (index: number, file: File) => {
+    if (!validateImageSize(file, `gallery_${index}`)) {
+      return;
+    }
+    
     try {
       const imageUrl = await uploadFile(
         file,
@@ -546,6 +580,7 @@ export default function ProductForm({
                   Related Parts
                 </label>
                 <div className="mt-1 border border-gray-300 rounded-md max-h-48 overflow-y-auto bg-white">
+                  {/* {console.log("related parts",selectedRelatedParts)} */}
                   {relatedParts.map((part) => (
                     <div
                       key={part.id}
@@ -595,8 +630,6 @@ export default function ProductForm({
                           "outdent",
                           "indent",
                           "|",
-                          "blockQuote",
-                          "insertTable",
                           "undo",
                           "redo",
                         ],
@@ -952,12 +985,12 @@ export default function ProductForm({
                   type="file"
                   accept="image/jpeg,image/jpg,image/png,image/webp"
                   onChange={(e) => {
-                    setImageFiles({
-                      ...imageFiles,
-                      product_img: e.target.files?.[0] || null,
-                    });
-                    // Clear error when file is selected
-                    if (e.target.files?.[0]) {
+                    const file = e.target.files?.[0];
+                    if (file && validateImageSize(file, 'product_img')) {
+                      setImageFiles({
+                        ...imageFiles,
+                        product_img: file,
+                      });
                       setImageErrors({ ...imageErrors, product_img: "" });
                     }
                   }}
@@ -984,14 +1017,22 @@ export default function ProductForm({
                 <input
                   type="file"
                   accept="image/jpeg,image/jpg,image/png,image/webp"
-                  onChange={(e) =>
-                    setImageFiles({
-                      ...imageFiles,
-                      overview_img: e.target.files?.[0] || null,
-                    })
-                  }
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && validateImageSize(file, 'overview_img')) {
+                      setImageFiles({
+                        ...imageFiles,
+                        overview_img: file,
+                      });
+                    }
+                  }}
                   className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
                 />
+                {imageErrors.overview_img && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {imageErrors.overview_img}
+                  </p>
+                )}
                 {productData?.overview_img && (
                   <img
                     src={productData.overview_img}
@@ -1034,13 +1075,12 @@ export default function ProductForm({
                           accept="image/*"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
-                            if (file) {
+                            if (file && validateImageSize(file, `gallery_${index}`)) {
                               setImageFiles({
                                 ...imageFiles,
                                 [`gallery_${index}`]: file,
                               });
                               handleGalleryImageUpload(index, file);
-                              // Clear gallery error when file is uploaded
                               setImageErrors({ ...imageErrors, gallery: "" });
                             }
                           }}
@@ -1052,7 +1092,6 @@ export default function ProductForm({
                           value={imageUrl}
                           onChange={(e) => {
                             updateGalleryImageUrl(index, e.target.value);
-                            // Clear gallery error when URL is added
                             if (e.target.value.trim()) {
                               setImageErrors({ ...imageErrors, gallery: "" });
                             }

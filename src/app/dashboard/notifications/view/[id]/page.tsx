@@ -15,7 +15,7 @@ export default function ViewNotificationPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { userData } = useAuth();
-  const userRole = userData?.role || 'pending';
+  const userRole = userData?.role || 'user';
 
   useEffect(() => {
     const fetchNotification = async () => {

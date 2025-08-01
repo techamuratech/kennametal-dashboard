@@ -7,6 +7,7 @@ import { hasPermission } from '@/lib/rbac';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/lib/toast-context';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 export default function UsersPage() {
   const { showToast } = useToast();
@@ -29,6 +30,22 @@ export default function UsersPage() {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [resetPasswordError, setResetPasswordError] = useState('');
   const [isAddingUser, setIsAddingUser] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showResetNewPassword, setShowResetNewPassword] = useState(false);
+  const [showResetConfirmPassword, setShowResetConfirmPassword] = useState(false);
+
+  // Add scroll to reset password function
+  const handleResetPasswordClick = (userId: string) => {
+    setShowResetPassword(userId);
+    // Scroll to reset password section after state update
+    setTimeout(() => {
+      const resetSection = document.getElementById('reset-password-section');
+      if (resetSection) {
+        resetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -326,27 +343,53 @@ export default function UsersPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Password</label>
-              <input
-                type="password"
-                value={newUserPassword}
-                onChange={(e) => setNewUserPassword(e.target.value)}
-                required
-                minLength={6}
-                maxLength={50}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-              />
+              <div className="relative">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  maxLength={50}
+                  className="mt-1 block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                >
+                  {showNewPassword ? (
+                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                minLength={6}
-                maxLength={50}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  maxLength={50}
+                  className="mt-1 block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
             </div>
             {passwordError && (
               <div className="text-red-600 text-sm">{passwordError}</div>
@@ -390,32 +433,58 @@ export default function UsersPage() {
       )}
 
       {showResetPassword && (
-        <div className="mb-6 p-4 bg-yellow-50 rounded-md border border-yellow-200">
+        <div id="reset-password-section" className="mb-6 p-4 bg-yellow-50 rounded-md border border-yellow-200">
           <h3 className="text-lg font-medium mb-4">Reset User Password</h3>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">New Password</label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                minLength={6}
-                maxLength={50}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-              />
+              <div className="relative">
+                <input
+                  type={showResetNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  maxLength={50}
+                  className="mt-1 block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowResetNewPassword(!showResetNewPassword)}
+                >
+                  {showResetNewPassword ? (
+                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Confirm New Password</label>
-              <input
-                type="password"
-                value={confirmNewPassword}
-                onChange={(e) => setConfirmNewPassword(e.target.value)}
-                required
-                minLength={6}
-                maxLength={50}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-              />
+              <div className="relative">
+                <input
+                  type={showResetConfirmPassword ? 'text' : 'password'}
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  maxLength={50}
+                  className="mt-1 block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowResetConfirmPassword(!showResetConfirmPassword)}
+                >
+                  {showResetConfirmPassword ? (
+                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
             </div>
             {resetPasswordError && (
               <div className="text-red-600 text-sm">{resetPasswordError}</div>
@@ -503,8 +572,8 @@ export default function UsersPage() {
                       <option value="user">User</option>
                     </select>
                     <button
-                      onClick={() => user.id && setShowResetPassword(user.id)}
-                      className="text-sm bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
+                      onClick={() => handleResetPasswordClick(user.id || '')}
+                      className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700"
                     >
                       Reset Password
                     </button>

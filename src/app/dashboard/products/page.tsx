@@ -212,6 +212,12 @@ export default function ProductsPage() {
                     </div>
                   </div>
                   <div className="ml-5 flex-shrink-0 flex space-x-2">
+                    <Link
+                      href={`/dashboard/products/view/${product.id}`}
+                      className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                    >
+                      View
+                    </Link>
                     {canUpdate && (
                       <Link
                         href={`/dashboard/products/edit/${product.id}`}

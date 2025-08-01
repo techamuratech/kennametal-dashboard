@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { hasPermission } from '@/lib/rbac';
 import { useState } from 'react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 
 interface NavItem {
   name: string;
@@ -123,7 +124,14 @@ export default function Sidebar() {
             </div>
             <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
               <div className="flex items-center flex-shrink-0 px-4 ml-12">
-                <Link href={'/dashboard'} onClick={() => setSidebarOpen(false)}>
+                <Link href={'/dashboard'} onClick={() => setSidebarOpen(false)} className="flex items-center">
+                  <Image
+                    src="/kennametal-icon.png"
+                    alt="Kennametal"
+                    width={32}
+                    height={32}
+                    className="mr-3"
+                  />
                   <span className="text-white text-xl font-bold">Kennametal</span>
                 </Link>
               </div>
@@ -163,7 +171,14 @@ export default function Sidebar() {
           <div className="flex flex-col h-0 flex-1 bg-gray-800">
             <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
               <div className="flex items-center flex-shrink-0 px-4">
-                <Link href={'/dashboard'}>
+                <Link href={'/dashboard'} className="flex items-center">
+                  <Image
+                    src="/kennametal-icon.png"
+                    alt="Kennametal"
+                    width={32}
+                    height={32}
+                    className="mr-3"
+                  />
                   <span className="text-white text-xl font-bold">Kennametal</span>
                 </Link>
               </div>
