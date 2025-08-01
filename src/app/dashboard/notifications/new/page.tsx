@@ -5,12 +5,14 @@ import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { createNotification, createLogEntry, uploadFile } from '@/lib/firestore-service';
 import { useAuth } from '@/lib/auth-context';
+import { useToast } from '@/lib/toast-context';
 
 export default function NewNotificationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const router = useRouter();
   const { userData } = useAuth();
+  const { showToast } = useToast();
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
@@ -43,9 +45,11 @@ export default function NewNotificationPage() {
           }
         });
       }
+      showToast('Notification created successfully', 'success');
       router.push('/dashboard/notifications');
     } catch (error) {
       console.error('Error creating notification:', error);
+      showToast('Failed to create notification. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }

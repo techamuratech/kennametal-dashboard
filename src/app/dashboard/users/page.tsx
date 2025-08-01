@@ -6,8 +6,10 @@ import { useAuth } from '@/lib/auth-context';
 import { hasPermission } from '@/lib/rbac';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { db } from '@/lib/firebase';
+import { useToast } from '@/lib/toast-context';
 
 export default function UsersPage() {
+  const { showToast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -183,7 +185,7 @@ export default function UsersPage() {
         });
       }
       
-      alert('User created successfully');
+      showToast('User created successfully', 'success');
     } catch (error) {
       console.error('Error adding user:', error);
       setPasswordError('Failed to create user. Please try again.');
@@ -248,7 +250,7 @@ export default function UsersPage() {
         });
       }
       
-      alert('Password updated successfully');
+      showToast('Password updated successfully', 'success');
     } catch (error) {
       console.error('Error updating password:', error);
       setResetPasswordError('Failed to update password. Please try again.');

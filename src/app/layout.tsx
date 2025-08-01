@@ -15,8 +15,22 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'Kennametal Dashboard',
-  description: 'Admin dashboard for Kennametal products',
+  description: 'Admin dashboard for Kennametal products and inventory management',
   viewport: 'width=device-width, initial-scale=1',
+  keywords: 'Kennametal, dashboard, admin, products, inventory, management',
+  authors: [{ name: 'Kennametal' }],
+  robots: 'noindex, nofollow', // Prevent search engines from indexing admin dashboard
+  icons: {
+    icon: '/favicon.ico', // or '/icon.png' if using PNG
+    shortcut: '/favicon.ico',
+    apple: '/apple-icon.png', // optional: add apple touch icon
+  },
+  openGraph: {
+    title: 'Kennametal Dashboard',
+    description: 'Admin dashboard for Kennametal products',
+    type: 'website',
+    locale: 'en_US',
+  },
 };
 
 function MyApp({ Component, pageProps }: any) {

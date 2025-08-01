@@ -6,8 +6,11 @@ import { getProducts, getCategories, deleteProduct, createLogEntry } from '@/lib
 import { useAuth } from '@/lib/auth-context';
 import { hasPermission } from '@/lib/rbac';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/lib/toast-context';
 
 export default function ProductsPage() {
+  const { showToast } = useToast();
+  
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -80,8 +83,10 @@ export default function ProductsPage() {
       // Refresh the list
       fetchProducts();
       setDeleteConfirm(null);
+      showToast('Product deleted successfully', 'success');
     } catch (error) {
       console.error('Error deleting product:', error);
+      showToast('Failed to delete product. Please try again.', 'error');
     }
   };
 

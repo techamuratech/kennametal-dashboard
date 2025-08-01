@@ -7,12 +7,14 @@ import { useAuth } from '@/lib/auth-context';
 import { hasPermission } from '@/lib/rbac';
 import { formatDistanceToNow } from 'date-fns';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/lib/toast-context';
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const { userData } = useAuth();
   const userRole = userData?.role || 'pending';
+  const { showToast } = useToast();
 
   const canCreate = hasPermission(userRole, 'create', 'notifications');
   const canDelete = hasPermission(userRole, 'delete', 'notifications');
@@ -56,9 +58,11 @@ export default function NotificationsPage() {
             }
           });
         }
+        showToast('Notification deleted successfully', 'success');
         fetchNotifications();
       } catch (error) {
         console.error('Error deleting notification:', error);
+        showToast('Failed to delete notification. Please try again.', 'error');
       }
     }
   };

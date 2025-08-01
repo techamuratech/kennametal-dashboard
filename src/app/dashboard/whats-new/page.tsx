@@ -8,6 +8,7 @@ import { hasPermission } from '@/lib/rbac';
 import { formatDistanceToNow } from 'date-fns';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Image from 'next/image';
+import { useToast } from '@/lib/toast-context';
 
 export default function WhatsNewPage() {
   const [whatsNewItems, setWhatsNewItems] = useState<WhatsNew[]>([]);
@@ -43,6 +44,8 @@ export default function WhatsNewPage() {
   }, [fetchWhatsNew]);
 
   const handleDelete = useCallback(async (id: string, name: string) => {
+    const { showToast } = useToast();
+    
     if (!window.confirm('Are you sure you want to delete this item?')) return;
     
     try {
@@ -54,9 +57,11 @@ export default function WhatsNewPage() {
           details: { whatsNewId: id, whatsNewName: name }
         });
       }
+      showToast('Item deleted successfully', 'success');
       await fetchWhatsNew();
     } catch (error) {
       console.error('Error deleting whats new item:', error);
+      showToast('Failed to delete item. Please try again.', 'error');
     }
   }, [userData, fetchWhatsNew]);
 

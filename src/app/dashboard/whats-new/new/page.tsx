@@ -5,12 +5,14 @@ import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { createWhatsNew, createLogEntry, uploadFile } from '@/lib/firestore-service';
 import { useAuth } from '@/lib/auth-context';
+import { useToast } from '@/lib/toast-context';
 
 export default function NewWhatsNewPage() {
   const [submitting, setSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const router = useRouter();
   const { userData } = useAuth();
+  const { showToast } = useToast();
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
@@ -43,9 +45,11 @@ export default function NewWhatsNewPage() {
           }
         });
       }
+      showToast("What's New item created successfully", 'success');
       router.push('/dashboard/whats-new');
     } catch (error) {
       console.error('Error creating whats new item:', error);
+      showToast('Failed to create item. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }
