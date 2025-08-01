@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { createLogEntry } from '@/lib/firestore-service';
 import Link from 'next/link';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -35,9 +36,17 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+        <div className="text-center">
+          <Image
+            src="/kennametal-app-icon.png"
+            alt="Kennametal"
+            width={120}
+            height={120}
+            className="mx-auto mb-6"
+            priority
+          />
+          <h2 className="mt-6 text-center text-4xl font-extrabold text-gray-900">
+            Sign in
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -99,6 +108,12 @@ export default function Login() {
             >
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
+          </div>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Forgot Password? Please contact your administrator
+            </p>
           </div>
         </form>
       </div>

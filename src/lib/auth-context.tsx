@@ -11,7 +11,7 @@ import { auth, db } from './firebase';
 import { loginWithFirestore } from './firestore-service';
 import { useToast } from './toast-context';
 
-type UserRole = 'master' | 'admin' | 'user' | 'pending';
+type UserRole = 'master' | 'admin' | 'user';
 
 interface UserData {
   uid: string;

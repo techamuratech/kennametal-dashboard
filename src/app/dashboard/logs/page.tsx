@@ -13,7 +13,7 @@ export default function LogsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [logsPerPage] = useState(10);
   const { userData } = useAuth();
-  const userRole = userData?.role || 'pending';
+  const userRole = userData?.role || 'user';
 
   const fetchLogs = async () => {
     setLoading(true);

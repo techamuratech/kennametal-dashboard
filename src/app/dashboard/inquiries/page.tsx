@@ -19,14 +19,14 @@ export default function InquiriesPage() {
   const [inquiriesPerPage] = useState(10);
 
   const { userData } = useAuth();
-  const userRole = userData?.role || 'pending';
+  const userRole = userData?.role || 'user';
 
   useEffect(() => {
     fetchInquiries();
   }, [userRole]); // Add userRole as dependency
 
   const fetchInquiries = async () => {
-    if (!userRole || userRole === 'pending') return; // Add early return
+    if (!userRole) return; // Remove pending check
     
     setLoading(true);
     try {

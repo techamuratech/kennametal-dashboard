@@ -15,12 +15,12 @@ export default function WhatsNewPage() {
   const [loading, setLoading] = useState(true);
   const { userData } = useAuth();
   
-  const userRole = useMemo(() => userData?.role || 'pending', [userData?.role]);
+  const userRole = useMemo(() => userData?.role || 'user', [userData?.role]);
   const canCreate = useMemo(() => hasPermission(userRole, 'create', 'whats_new'), [userRole]);
   const canDelete = useMemo(() => hasPermission(userRole, 'delete', 'whats_new'), [userRole]);
 
   const fetchWhatsNew = useCallback(async () => {
-    if (!userRole || userRole === 'pending') return;
+    if (!userRole) return;
     
     setLoading(true);
     try {

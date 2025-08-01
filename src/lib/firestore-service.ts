@@ -342,7 +342,7 @@ export const loginWithFirestore = async (email: string, password: string): Promi
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
-      throw new Error('Invalid email or password');
+      throw new Error('Login Failed. Invalid username/password.');
     }
     
     const userDoc = querySnapshot.docs[0];
@@ -358,7 +358,7 @@ export const loginWithFirestore = async (email: string, password: string): Promi
     const isPasswordValid = await bcrypt.compare(password, userData.hashedPassword || '');
     
     if (!isPasswordValid) {
-      throw new Error('Invalid email or password');
+      throw new Error('Login Failed. Invalid username/password.');
     }
     
     return { id: userDoc.id, ...userData };

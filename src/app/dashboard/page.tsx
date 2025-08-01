@@ -32,7 +32,7 @@ export default function Dashboard() {
   const { user, userData, loading: authLoading } = useAuth();
   const { isOnline, wasOffline } = useNetworkStatus();
 
-  const userRole = authLoading ? null : (userData?.role || 'pending');
+  const userRole = authLoading ? null : (userData?.role || 'user'); // Change from 'pending' to 'user'
 
   // Show offline message if no internet connection
   if (!isOnline) {
@@ -48,7 +48,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      if (authLoading || !userRole || userRole === 'pending') return;
+      if (authLoading || !userRole) return;
       
       setLoading(true);
       try {
@@ -109,17 +109,6 @@ export default function Dashboard() {
         <LoadingSpinner size="lg" message="Loading Dashboard Data..." />
       </div>
     );
-  }
-
-  // Show unauthorized for confirmed pending users (after auth is loaded and user exists)
-  if (user && !authLoading && userRole === 'pending') {
-    return(
-      <>
-        <div className='flex justify-center items-center h-full'>
-          <div className='text-red-600 text-3xl'>You are not authorized to view this page.</div>
-        </div>
-      </>
-    )
   }
 
   // Show loading while fetching dashboard data for authorized users

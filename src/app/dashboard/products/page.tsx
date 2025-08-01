@@ -21,7 +21,7 @@ export default function ProductsPage() {
   const [productsPerPage] = useState(10);
   
   const { userData } = useAuth();
-  const userRole = userData?.role || 'pending';
+  const userRole = userData?.role || 'user';
   
   const canCreate = hasPermission(userRole, 'create', 'products');
   const canUpdate = hasPermission(userRole, 'update', 'products');

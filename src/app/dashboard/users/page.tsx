@@ -16,7 +16,7 @@ export default function UsersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
   const { userData, refreshUserData } = useAuth();
-  const userRole = userData?.role || 'pending';
+  const userRole = userData?.role || 'user';
 
   const [showAddUser, setShowAddUser] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState<string | null>(null);
@@ -52,8 +52,8 @@ export default function UsersPage() {
     if (userRole !== 'master') return;
 
     try {
-      await updateUser(userId, { role: newRole as 'master' | 'admin' | 'user' | 'pending' });
-      setUsers(users.map(user => user.id === userId ? { ...user, role: newRole as 'master' | 'admin' | 'user' | 'pending' } : user));
+      await updateUser(userId, { role: newRole as 'master' | 'admin' | 'user' });
+      setUsers(users.map(user => user.id === userId ? { ...user, role: newRole as 'master' | 'admin' | 'user' } : user));
       
       // Log the role change
       if (userData) {
@@ -465,7 +465,7 @@ export default function UsersPage() {
               </td>
               <td className="px-6 py-4 whitespace-nowrap uppercase">
                 <span className={user.status === 'disabled' ? 'line-through text-red-500' : ''}>
-                  {user.role == 'pending' ? 'Approval Pending': user.role }
+                  {user.role}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
@@ -503,7 +503,6 @@ export default function UsersPage() {
                       <option value="master">Master</option>
                       <option value="admin">Admin</option>
                       <option value="user">User</option>
-                      <option value="pending">Approval Pending</option>
                     </select>
                     <button
                       onClick={() => user.id && setShowResetPassword(user.id)}

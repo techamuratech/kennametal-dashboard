@@ -1,6 +1,6 @@
 // Role-based access control utility
 
-export type UserRole = 'master' | 'admin' | 'user' | 'pending';
+export type UserRole = 'master' | 'admin' | 'user';
 
 interface Permission {
   action: 'create' | 'read' | 'update' | 'delete';
@@ -79,9 +79,6 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     { action: 'read', resource: 'inquiries' },
     { action: 'read', resource: 'notifications' },
     { action: 'read', resource: 'whats_new' }
-  ],
-  pending: [
-    // Pending users have no permissions
   ]
 };
 
@@ -93,6 +90,8 @@ export const hasPermission = (
   if (!userRole) return false;
   
   const permissions = rolePermissions[userRole];
+  if (!permissions) return false; // Add this check
+  
   return permissions.some(
     permission => 
       permission.action === action && 

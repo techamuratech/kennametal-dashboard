@@ -13,7 +13,7 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const { userData } = useAuth();
-  const userRole = userData?.role || 'pending';
+  const userRole = userData?.role || 'user';
   const { showToast } = useToast();
 
   const canCreate = hasPermission(userRole, 'create', 'notifications');
@@ -24,7 +24,7 @@ export default function NotificationsPage() {
   }, [userRole]);
 
   const fetchNotifications = async () => {
-    if (!userRole || userRole === 'pending') return;
+    if (!userRole) return;
     
     setLoading(true);
     try {

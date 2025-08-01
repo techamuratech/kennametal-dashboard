@@ -13,7 +13,7 @@ export default function CategoriesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   
   const { userData } = useAuth();
-  const userRole = userData?.role || 'pending';
+  const userRole = userData?.role || 'user';
   
   // const canCreate = hasPermission(userRole, 'create', 'categories');
   const canUpdate = hasPermission(userRole, 'update', 'categories');

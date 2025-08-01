@@ -84,7 +84,7 @@ const navigation: NavItem[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { userData } = useAuth();
-  const userRole = userData?.role || 'pending';
+  const userRole = userData?.role || 'user'; // Change from 'pending' to 'user'
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Filter navigation items based on user permissions

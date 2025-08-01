@@ -28,7 +28,7 @@ export default function AppUsersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
   const { userData } = useAuth();
-  const userRole = userData?.role || 'pending';
+  const userRole = userData?.role || 'user';
 
   // Remove handleResetPassword function
 
