@@ -142,7 +142,12 @@ export interface Notification {
   description: string;
   time?: Timestamp;
   image?: string;
-  link?: string;
+  link?: {
+    type: 'screen' | 'url';
+    screen?: string;
+    url?: string;
+    params?: Record<string, string>;
+  };
 }
 
 export interface WhatsNew {
@@ -151,7 +156,12 @@ export interface WhatsNew {
   description: string;
   time?: Timestamp;
   image?: string;
-  link?: string;
+  link?: {
+    type: 'screen' | 'url';
+    screen?: string;
+    url?: string;
+    params?: Record<string, string>;
+  };
 }
 
 // Products

@@ -10,6 +10,23 @@ import { useToast } from '@/lib/toast-context';
 export default function NewWhatsNewPage() {
   const [submitting, setSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageError, setImageError] = useState<string>('');
+  const [linkType, setLinkType] = useState<'screen' | 'url'>('url');
+  const [screenPath, setScreenPath] = useState('');
+  const [externalUrl, setExternalUrl] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [productId, setProductId] = useState('');
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
+  const validateImageSize = (file: File): boolean => {
+    if (file.size > MAX_FILE_SIZE) {
+      setImageError(`Image size must be less than 2MB. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+      return false;
+    }
+    setImageError('');
+    return true;
+  };
+
   const router = useRouter();
   const { userData } = useAuth();
   const { showToast } = useToast();
@@ -18,7 +35,6 @@ export default function NewWhatsNewPage() {
     defaultValues: {
       name: '',
       description: '',
-      link: '',
     }
   });
 
@@ -31,6 +47,30 @@ export default function NewWhatsNewPage() {
       if (imageFile) {
         const imageUrl = await uploadFile(imageFile, `whats-new/${imageFile.name}`);
         whatsNewData.image = imageUrl;
+      }
+
+      // Handle link structure
+      if (linkType === 'url' && externalUrl) {
+        whatsNewData.link = {
+          type: 'url',
+          url: externalUrl
+        };
+      } else if (linkType === 'screen' && screenPath) {
+        const linkData: any = {
+          type: 'screen',
+          screen: screenPath
+        };
+
+        // Add params for category listing
+        if (screenPath === '/ProductListing' && categoryId) {
+          linkData.params = { categoryId };
+        }
+        // Add product ID to screen path for product detail
+        else if (screenPath === '/ProductDetail' && productId) {
+          linkData.screen = `/ProductDetail?id=${productId}`;
+        }
+
+        whatsNewData.link = linkData;
       }
 
       const newWhatsNewId = await createWhatsNew(whatsNewData);
@@ -89,30 +129,98 @@ export default function NewWhatsNewPage() {
             {errors.description && <p className="text-red-600 text-sm">{errors.description.message}</p>}
           </div>
 
+          {/* Link Configuration */}
           <div>
-            <label htmlFor="link" className="form-label">Link (Optional)</label>
-            <input
-              id="link"
-              type="url"
-              maxLength={150}
+            <label className="form-label">Link Type</label>
+            <select
+              value={linkType}
+              onChange={(e) => setLinkType(e.target.value as 'screen' | 'url')}
               className="form-input"
-              placeholder="https://example.com"
-              {...register('link', {
-                maxLength: { value: 150, message: 'Link must be 150 characters or less' }
-              })}
-            />
-            {errors.link && <p className="text-red-600 text-sm">{errors.link.message}</p>}
+            >
+              <option value="url">External URL</option>
+              <option value="screen">Internal Screen</option>
+            </select>
           </div>
 
+          {linkType === 'url' ? (
+            <div>
+              <label htmlFor="externalUrl" className="form-label">External URL</label>
+              <input
+                id="externalUrl"
+                type="url"
+                value={externalUrl}
+                onChange={(e) => setExternalUrl(e.target.value)}
+                className="form-input"
+                placeholder="https://kennametal.com"
+              />
+            </div>
+          ) : (
+            <>
+              <div>
+                <label htmlFor="screenPath" className="form-label">Screen Path</label>
+                <select
+                  id="screenPath"
+                  value={screenPath}
+                  onChange={(e) => setScreenPath(e.target.value)}
+                  className="form-input"
+                >
+                  <option value="">Select Screen</option>
+                  <option value="/Profile">Profile</option>
+                  <option value="/ProductListing">Product Listing</option>
+                  <option value="/ProductDetail">Product Detail</option>
+                </select>
+              </div>
+
+              {screenPath === '/ProductListing' && (
+                <div>
+                  <label htmlFor="categoryId" className="form-label">Category ID</label>
+                  <input
+                    id="categoryId"
+                    type="text"
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    className="form-input"
+                    placeholder="foundation-drilling"
+                  />
+                </div>
+              )}
+
+              {screenPath === '/ProductDetail' && (
+                <div>
+                  <label htmlFor="productId" className="form-label">Product ID</label>
+                  <input
+                    id="productId"
+                    type="text"
+                    value={productId}
+                    onChange={(e) => setProductId(e.target.value)}
+                    className="form-input"
+                    placeholder="89yONLImQmxoexBM8vK"
+                  />
+                </div>
+              )}
+            </>
+          )}
+
           <div>
-            <label htmlFor="image" className="form-label">Image (Optional)</label>
+            <label htmlFor="image" className="form-label">Image (Recommended: 716x716px, JPG/PNG, Max 2MB)</label>
             <input
               id="image"
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
               className="form-input"
-              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                if (file && validateImageSize(file)) {
+                  setImageFile(file);
+                } else if (!file) {
+                  setImageFile(null);
+                  setImageError('');
+                }
+              }}
             />
+            {imageError && (
+              <p className="mt-1 text-sm text-red-600">{imageError}</p>
+            )}
             {imageFile && (
               <div className="mt-2">
                 <p className="text-sm text-gray-600 mb-2">Selected image:</p>

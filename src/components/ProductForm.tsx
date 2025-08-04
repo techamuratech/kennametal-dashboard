@@ -136,9 +136,21 @@ export default function ProductForm({
   };
 
   const handleApplicationIconUpload = async (index: number, file: File) => {
-    if (!validateImageSize(file, `app_icon_${index}`)) {
+    const MAX_ICON_SIZE = 1 * 1024 * 1024; // 1MB
+    if (file.size > MAX_ICON_SIZE) {
+      setImageErrors(prev => ({
+        ...prev,
+        [`app_icon_${index}`]: `Icon size must be less than 1MB. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`
+      }));
       return;
     }
+    
+    // Clear error if file is valid
+    setImageErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[`app_icon_${index}`];
+      return newErrors;
+    });
     
     try {
       const iconUrl = await uploadFile(
@@ -908,6 +920,11 @@ export default function ProductForm({
                           />
                         )}
                       </div>
+                      {imageErrors[`app_icon_${index}`] && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {imageErrors[`app_icon_${index}`]}
+                        </p>
+                      )}
                       <input
                         type="text"
                         value={field.icon}

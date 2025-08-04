@@ -15,7 +15,7 @@ export default function ViewWhatsNewPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { userData } = useAuth();
-  const userRole = userData?.role || 'pending';
+  const userRole = userData?.role || 'user';
 
   useEffect(() => {
     const fetchWhatsNewItem = async () => {
