@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
-import { createNotification, createLogEntry, uploadFile } from '@/lib/firestore-service';
+import { createNotification, createLogEntry, uploadFile, getProducts, getCategories } from '@/lib/firestore-service';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 
@@ -14,12 +14,35 @@ export default function NewNotificationPage() {
   const [linkType, setLinkType] = useState<'screen' | 'url'>('url');
   const [screenPath, setScreenPath] = useState('');
   const [externalUrl, setExternalUrl] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [productId, setProductId] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { userData } = useAuth();
   const { showToast } = useToast();
   const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [productsData, categoriesData] = await Promise.all([
+          getProducts(),
+          getCategories()
+        ]);
+        setProducts(productsData);
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const validateImageSize = (file: File): boolean => {
     if (file.size > MAX_FILE_SIZE) {
@@ -61,12 +84,14 @@ export default function NewNotificationPage() {
         };
 
         // Add params for category listing
-        if (screenPath === '/ProductListing' && categoryId) {
-          linkData.params = { categoryId };
+        if (screenPath === '/ProductListing' && selectedCategory) {
+          const category = categories.find(cat => cat.id === selectedCategory);
+          linkData.params = { categoryId: category?.id || selectedCategory };
         }
         // Add product ID to screen path for product detail
-        else if (screenPath === '/ProductDetail' && productId) {
-          linkData.screen = `/ProductDetail?id=${productId}`;
+        else if (screenPath === '/ProductDetail' && selectedProduct) {
+          const product = products.find(prod => prod.id === selectedProduct);
+          linkData.screen = `/ProductDetail?id=${product?.id || selectedProduct}`;
         }
 
         notificationData.link = linkData;
@@ -160,7 +185,11 @@ export default function NewNotificationPage() {
                 <select
                   id="screenPath"
                   value={screenPath}
-                  onChange={(e) => setScreenPath(e.target.value)}
+                  onChange={(e) => {
+                    setScreenPath(e.target.value);
+                    setSelectedProduct('');
+                    setSelectedCategory('');
+                  }}
                   className="form-input"
                 >
                   <option value="">Select Screen</option>
@@ -172,29 +201,41 @@ export default function NewNotificationPage() {
 
               {screenPath === '/ProductListing' && (
                 <div>
-                  <label htmlFor="categoryId" className="form-label">Category ID</label>
-                  <input
-                    id="categoryId"
-                    type="text"
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
+                  <label htmlFor="categorySelect" className="form-label">Select Category</label>
+                  <select
+                    id="categorySelect"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
                     className="form-input"
-                    placeholder="foundation-drilling"
-                  />
+                    disabled={loading}
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.title}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
 
               {screenPath === '/ProductDetail' && (
                 <div>
-                  <label htmlFor="productId" className="form-label">Product ID</label>
-                  <input
-                    id="productId"
-                    type="text"
-                    value={productId}
-                    onChange={(e) => setProductId(e.target.value)}
+                  <label htmlFor="productSelect" className="form-label">Select Product</label>
+                  <select
+                    id="productSelect"
+                    value={selectedProduct}
+                    onChange={(e) => setSelectedProduct(e.target.value)}
                     className="form-input"
-                    placeholder="89yONLImQmxoexBM8vK"
-                  />
+                    disabled={loading}
+                  >
+                    <option value="">Select Product</option>
+                    {products.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.title}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
             </>

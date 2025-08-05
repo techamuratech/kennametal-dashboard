@@ -142,15 +142,31 @@ export default function AppUsersPage() {
         <label htmlFor="searchAppUsers" className="block text-sm font-medium text-gray-700 mb-1">
           Search App Users
         </label>
-        <input
-          id="searchAppUsers"
-          type="text"
-          placeholder="Search by name, email, or company..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          maxLength={150}
-          className="block w-1/2 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-        />
+        <div className="relative w-1/2">
+          <input
+            id="searchAppUsers"
+            type="text"
+            placeholder="Search by name, email, or company..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            maxLength={150}
+            className="block w-full py-2 px-3 pr-10 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm('');
+                setCurrentPage(1);
+              }}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto">
