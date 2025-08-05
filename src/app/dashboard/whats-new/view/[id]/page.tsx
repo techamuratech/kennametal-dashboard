@@ -17,6 +17,19 @@ export default function ViewWhatsNewPage() {
   const { userData } = useAuth();
   const userRole = userData?.role || 'user';
 
+  // Ensure we never render an object directly into JSX
+  const safeString = (value: unknown) => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+  };
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return 'Unknown';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000);
+    return formatDistanceToNow(date, { addSuffix: true });
+  };
+
   useEffect(() => {
     const fetchWhatsNewItem = async () => {
       setLoading(true);
@@ -41,12 +54,6 @@ export default function ViewWhatsNewPage() {
     fetchWhatsNewItem();
   }, [whatsNewId, userRole, router]);
 
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'Unknown';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000);
-    return formatDistanceToNow(date, { addSuffix: true });
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -68,22 +75,23 @@ export default function ViewWhatsNewPage() {
       <div className="card">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">What's New Details</h1>
-          <Link
-            href="/dashboard/whats-new"
-            className="btn-secondary"
-          >
+          <Link href="/dashboard/whats-new" className="btn-secondary">
             Back to What's New
           </Link>
         </div>
 
         <div className="space-y-6">
+          {/* Title */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Title
             </label>
-            <p className="text-lg font-medium text-gray-900">{whatsNewItem.name}</p>
+            <p className="text-lg font-medium text-gray-900">
+              {safeString(whatsNewItem.name) || 'Untitled'}
+            </p>
           </div>
 
+          {/* Created */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Created
@@ -91,16 +99,20 @@ export default function ViewWhatsNewPage() {
             <p className="text-sm text-gray-600">{formatDate(whatsNewItem.time)}</p>
           </div>
 
+          {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Description
             </label>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-gray-900 whitespace-pre-wrap">{whatsNewItem.description}</p>
+              <p className="text-gray-900 whitespace-pre-wrap">
+                {safeString(whatsNewItem.description) || 'No description available'}
+              </p>
             </div>
           </div>
 
-          {whatsNewItem.link && (
+          {/* Link */}
+          {whatsNewItem.link && typeof whatsNewItem.link === 'string' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Link
@@ -116,6 +128,7 @@ export default function ViewWhatsNewPage() {
             </div>
           )}
 
+          {/* Image */}
           {whatsNewItem.image && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -124,7 +137,7 @@ export default function ViewWhatsNewPage() {
               <div className="mt-2">
                 <img
                   src={whatsNewItem.image}
-                  alt={whatsNewItem.name}
+                  alt={safeString(whatsNewItem.name)}
                   className="max-w-md h-auto rounded-lg border shadow-sm"
                 />
               </div>

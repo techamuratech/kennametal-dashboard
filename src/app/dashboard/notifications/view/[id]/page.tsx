@@ -17,6 +17,19 @@ export default function ViewNotificationPage() {
   const { userData } = useAuth();
   const userRole = userData?.role || 'user';
 
+  // Safe string helper so we never render objects in JSX directly
+  const safeString = (value: unknown) => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+  };
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return 'Unknown';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000);
+    return formatDistanceToNow(date, { addSuffix: true });
+  };
+
   useEffect(() => {
     const fetchNotification = async () => {
       setLoading(true);
@@ -41,12 +54,6 @@ export default function ViewNotificationPage() {
     fetchNotification();
   }, [notificationId, userRole, router]);
 
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'Unknown';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000);
-    return formatDistanceToNow(date, { addSuffix: true });
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -68,27 +75,23 @@ export default function ViewNotificationPage() {
       <div className="card">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Notification Details</h1>
-          <Link
-            href="/dashboard/notifications"
-            className="btn-secondary"
-          >
+          <Link href="/dashboard/notifications" className="btn-secondary">
             Back to Notifications
           </Link>
         </div>
 
         <div className="space-y-6">
+          {/* Title */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Notification Title
             </label>
             <p className="text-lg font-medium text-gray-900">
-              {typeof notification.name === 'object' && notification.name !== null
-                ? JSON.stringify(notification.name)
-                : String(notification.name || 'Untitled')
-              }
+              {safeString(notification.name) || 'Untitled'}
             </p>
           </div>
 
+          {/* Created Date */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Created
@@ -96,36 +99,52 @@ export default function ViewNotificationPage() {
             <p className="text-sm text-gray-600">{formatDate(notification.time)}</p>
           </div>
 
+          {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Description
             </label>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-gray-900 whitespace-pre-wrap">
-                {typeof notification.description === 'object' && notification.description !== null
-                  ? JSON.stringify(notification.description, null, 2)
-                  : String(notification.description || 'No description available')
-                }
+                {safeString(notification.description) || 'No description available'}
               </p>
             </div>
           </div>
 
-          {notification.link && (
+          {/* Link Handling */}
+          {notification.link?.type === 'url' && notification.link.url && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Link
               </label>
               <a
-                href={notification.link}
+                href={notification.link.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-800 underline break-all"
               >
-                {notification.link}
+                {notification.link.url}
               </a>
             </div>
           )}
 
+          {notification.link?.type === 'screen' && notification.link.screen && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Screen Navigation
+              </label>
+              <p className="text-gray-900">
+                Screen: {notification.link.screen}
+              </p>
+              {notification.link.params && (
+                <pre className="bg-gray-100 p-2 rounded mt-2 text-sm">
+                  {JSON.stringify(notification.link.params, null, 2)}
+                </pre>
+              )}
+            </div>
+          )}
+
+          {/* Image */}
           {notification.image && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -134,7 +153,7 @@ export default function ViewNotificationPage() {
               <div className="mt-2">
                 <img
                   src={notification.image}
-                  alt={notification.name}
+                  alt={safeString(notification.name)}
                   className="max-w-md h-auto rounded-lg border shadow-sm"
                 />
               </div>
