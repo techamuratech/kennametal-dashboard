@@ -86,7 +86,7 @@ export default function NewNotificationPage() {
         // Add params for category listing
         if (screenPath === '/ProductListing' && selectedCategory) {
           const category = categories.find(cat => cat.id === selectedCategory);
-          linkData.params = { categoryId: category?.id || selectedCategory };
+          linkData.screen = `/ProductListing?id=${category?.id || selectedCategory}`;
         }
         // Add product ID to screen path for product detail
         else if (screenPath === '/ProductDetail' && selectedProduct) {

@@ -11,9 +11,8 @@ export default function NewWhatsNewPage() {
   const [submitting, setSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageError, setImageError] = useState<string>('');
-  const [linkType, setLinkType] = useState<'screen' | 'url'>('url');
+  const [linkType, setLinkType] = useState<'screen'>('screen');
   const [screenPath, setScreenPath] = useState('');
-  const [externalUrl, setExternalUrl] = useState('');
   const [selectedProduct, setSelectedProduct] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [products, setProducts] = useState<any[]>([]);
@@ -73,12 +72,7 @@ export default function NewWhatsNewPage() {
       }
 
       // Handle link structure
-      if (linkType === 'url' && externalUrl) {
-        whatsNewData.link = {
-          type: 'url',
-          url: externalUrl
-        };
-      } else if (linkType === 'screen' && screenPath) {
+      if (linkType === 'screen' && screenPath) {
         const linkData: any = {
           type: 'screen',
           screen: screenPath
@@ -87,7 +81,7 @@ export default function NewWhatsNewPage() {
         // Add params for category listing
         if (screenPath === '/ProductListing' && selectedCategory) {
           const category = categories.find(cat => cat.id === selectedCategory);
-          linkData.params = { categoryId: category?.id || selectedCategory };
+          linkData.screen = `/ProductListing?id=${category?.id || selectedCategory}`;
         }
         // Add product ID to screen path for product detail
         else if (screenPath === '/ProductDetail' && selectedProduct) {
@@ -156,90 +150,62 @@ export default function NewWhatsNewPage() {
 
           {/* Link Configuration */}
           <div>
-            <label className="form-label">Link Type</label>
+            <label className="form-label">Internal Screen</label>
             <select
-              value={linkType}
-              onChange={(e) => setLinkType(e.target.value as 'screen' | 'url')}
+              id="screenPath"
+              value={screenPath}
+              onChange={(e) => {
+                setScreenPath(e.target.value);
+                setSelectedProduct('');
+                setSelectedCategory('');
+              }}
               className="form-input"
             >
-              <option value="url">External URL</option>
-              <option value="screen">Internal Screen</option>
+              <option value="">Select Screen</option>
+              <option value="/Profile">Profile</option>
+              <option value="/ProductListing">Product Listing</option>
+              <option value="/ProductDetail">Product Detail</option>
             </select>
           </div>
 
-          {linkType === 'url' ? (
+          {screenPath === '/ProductListing' && (
             <div>
-              <label htmlFor="externalUrl" className="form-label">External URL</label>
-              <input
-                id="externalUrl"
-                type="url"
-                value={externalUrl}
-                onChange={(e) => setExternalUrl(e.target.value)}
+              <label htmlFor="categorySelect" className="form-label">Select Category</label>
+              <select
+                id="categorySelect"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
                 className="form-input"
-                placeholder="https://kennametal.com"
-              />
+                disabled={loading}
+              >
+                <option value="">Select Category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.title}
+                  </option>
+                ))}
+              </select>
             </div>
-          ) : (
-            <>
-              <div>
-                <label htmlFor="screenPath" className="form-label">Screen Path</label>
-                <select
-                  id="screenPath"
-                  value={screenPath}
-                  onChange={(e) => {
-                    setScreenPath(e.target.value);
-                    setSelectedProduct('');
-                    setSelectedCategory('');
-                  }}
-                  className="form-input"
-                >
-                  <option value="">Select Screen</option>
-                  <option value="/Profile">Profile</option>
-                  <option value="/ProductListing">Product Listing</option>
-                  <option value="/ProductDetail">Product Detail</option>
-                </select>
-              </div>
+          )}
 
-              {screenPath === '/ProductListing' && (
-                <div>
-                  <label htmlFor="categorySelect" className="form-label">Select Category</label>
-                  <select
-                    id="categorySelect"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="form-input"
-                    disabled={loading}
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {screenPath === '/ProductDetail' && (
-                <div>
-                  <label htmlFor="productSelect" className="form-label">Select Product</label>
-                  <select
-                    id="productSelect"
-                    value={selectedProduct}
-                    onChange={(e) => setSelectedProduct(e.target.value)}
-                    className="form-input"
-                    disabled={loading}
-                  >
-                    <option value="">Select Product</option>
-                    {products.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </>
+          {screenPath === '/ProductDetail' && (
+            <div>
+              <label htmlFor="productSelect" className="form-label">Select Product</label>
+              <select
+                id="productSelect"
+                value={selectedProduct}
+                onChange={(e) => setSelectedProduct(e.target.value)}
+                className="form-input"
+                disabled={loading}
+              >
+                <option value="">Select Product</option>
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.title}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
 
           <div>
