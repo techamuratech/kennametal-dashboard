@@ -71,6 +71,23 @@ export default function AppUsersPage() {
           }
         });
       }
+
+      // If authenticated was set to true, send an email notification via API route
+      if (isAuthenticated && user?.email) {
+        try {
+          await fetch('/api/send-auth-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+            }),
+          });
+        } catch (e) {
+          console.error('Failed to trigger auth email:', e);
+        }
+      }
     } catch (error) {
       console.error('Error updating user authentication status:', error);
     }
